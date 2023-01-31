@@ -1,0 +1,12 @@
+Link to install audio etc: https://github.com/kb-labb/riksdagen_anforanden
+when running (at KBLab) make sure to do [ export PYTHONPATH=/home/mayanachesa/Documents/Thesis/riksdagen_anforanden ]
+
+Effects of age on the amplitude, frequency and perceived quality of voice (Lortie et al., 2015)
+	- Age affects the voice, but "the ability to increase/decrease the amplitute and frequency of voice are preserved, at least in the age range studied"
+	- i.e., voice differences are primarily observed not in connected speech. These differences are mostly observed in sustained vowels. Even mean F0 doesn't change in connected speech? Wild
+	
+Notes on github:
+	- yml file has wrong indents
+	- step 3 is miss-spelled (extra t in ...metadata.py)
+	- conda environment needs way more dependencies (but maybe they just didn't come with miniconda)
+	- step 4 says an audio file is already downloaded for most of the files
