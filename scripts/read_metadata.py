@@ -5,11 +5,13 @@ from collections import defaultdict
 
 #---------------------------------------------------------------------
 # data paths
-thesis = "C:/Users/mayan/Documents/Language Technology Uppsala/Thesis"
-data_path = os.path.join(thesis, "metadata/data")
+thesis = os.getcwd()
+# thesis = "C:/Users/mayan/Documents/Language Technology Uppsala/Thesis"
+data_path = os.path.join(thesis, "metadata")#/data")
 
 riksdagen = os.path.join(data_path, "riksdagen_speeches.parquet")
 speaker_meta_path = os.path.join(data_path, "person.csv")
+timestamp_path = os.path.join(data_path, "df_timestamp.parquet")
 
 save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
 #---------------------------------------------------------------------
@@ -19,6 +21,7 @@ save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
 print("Opening dataframes")
 df = pd.read_parquet(riksdagen)
 df_meta = pd.read_csv(speaker_meta_path)
+df_timestamp = pd.read_parquet(timestamp_path)
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -109,6 +112,26 @@ df["over_15"] = df["shortname"].apply(lambda x: x in over_15)
 df_10 = df[df["over_10"] == True].reset_index()
 save_dokid = os.path.join(data_path, "dokid_anfnum_over10_speeches.parquet")
 df_10[["dokid", "anforande_nummer"]].to_parquet(save_dokid, index=False)
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# check debate timestamps
+df_timestamp["debateurl_timestamp"] = (
+
+"https://www.riksdagen.se/views/pages/embedpage.aspx?did="
+
++ df_timestamp["dokid"]
+
++ "&start="
+
++ df_timestamp["start_text_time"].astype(str)
+
++ "&end="
+
++ (df_timestamp["end_text_time"]).astype(str)
+
+)
+
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
