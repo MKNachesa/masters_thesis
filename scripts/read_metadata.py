@@ -6,6 +6,10 @@ from collections import defaultdict
 #---------------------------------------------------------------------
 # data paths
 thesis = os.getcwd()
+while thesis.split("\\")[-1] != "masters_thesis":
+    os.chdir("..")
+    thesis = os.getcwd()
+
 # thesis = "C:/Users/mayan/Documents/Language Technology Uppsala/Thesis"
 data_path = os.path.join(thesis, "metadata")#/data")
 

@@ -1,0 +1,2 @@
+#ignore huge parquet file
+metadata/riksdagen_speeches.parquet
