@@ -1,0 +1,13 @@
+Faton: 
+	- Am I allowed to link to the GitHub?
+	- Notes on github:
+	- yml file has wrong indents
+	- step 3 is miss-spelled (extra t in ...metadata.py)
+	- conda environment needs way more dependencies (but maybe they just didn't come with miniconda)
+	- step 4 says an audio file is already downloaded for most of the files
+	
+Rafal:
+	- Send me a new contract, I can sign it digitally
+	
+Sara:
+	- 

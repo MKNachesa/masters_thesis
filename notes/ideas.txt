@@ -1,0 +1,10 @@
+- emotion classification from voiceprint
+	- if good: nice!
+	- if not: stable across emotions!
+	- do this first (before seeing if different emotions compete with recognising people through voiceprints)!
+	- on uppmax	
+- check if result same for VPs of 30 secs vs 5 mins
+- mention that research is in swedish so age on voice might not apply the same!
+	- my research is so inclusive and debiasing :)
+- draw my own plots for F0?
+- visualise with t-SNE

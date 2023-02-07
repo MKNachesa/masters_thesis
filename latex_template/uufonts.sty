@@ -1,0 +1,202 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{uufonts}[2020/04/03 v2.0 Uppsala University fonts]
+
+\RequirePackage{ifluatex}
+
+\newif\ifuufonts@systemfonts
+\uufonts@systemfontsfalse
+\ifluatex
+% Then assume we have the fonts and yield error later otherwise.
+% (Checking if font exists takes time.)
+\uufonts@systemfontstrue
+\else
+\RequirePackage[T1]{fontenc}
+\RequirePackage{textcomp}
+\fi
+
+\newif\ifuufonts@mainsans
+\uufonts@mainsansfalse
+\DeclareOption{sfdefault}{\uufonts@mainsanstrue}
+
+\newif\ifuufonts@math
+\uufonts@mathtrue
+% Official option "no-math" similar to what fontspec has.
+% Alternative "nomath" because that's what previous version had.
+\DeclareOption{no-math}{\uufonts@mathfalse}
+\DeclareOption{nomath}{%
+  \PackageWarning{uufonts}{Use option `no-math' instead of `nomath'}%
+  \uufonts@mathfalse}
+
+\newif\ifuufonts@sans
+\uufonts@sanstrue
+\DeclareOption{no-sans}{\uufonts@sansfalse}
+
+\newif\ifuufonts@mono
+\uufonts@monotrue
+\DeclareOption{no-mono}{\uufonts@monofalse}
+
+\ProcessOptions
+
+\ifuufonts@systemfonts
+% === Math ===
+%
+% There are no official recommendations from UU, but this seems to fit
+% well.
+%
+% This should be done before fontspec is loaded,
+% and is continued later on after we have a default font.
+\ifuufonts@math
+\RequirePackage[libertine,cmintegrals,bigdelims,vvarbb]{newtxmath}
+\fi
+
+\RequirePackage[no-math]{fontspec}
+
+% === Berling ===
+\ifuufonts@mainsans
+% Then Berling is not needed.
+\renewcommand{\familydefault}{\sfdefault}
+\else
+\IfFileExists{./Berling-Roman.otf}{
+  \setmainfont{Berling-Roman.otf}[
+  BoldFont = Berling-Bold.otf ,
+  ItalicFont = Berling-Italic.otf ,
+  BoldItalicFont = Berling-BoldItalic.otf]
+}{
+  \setmainfont{Berling}
+}
+% The Berling font lacks some characters that microtype expects,
+% which results in warnings like
+% Package microtype Warning: Unknown slot number of character
+% (microtype)                `\k A'
+% (microtype)                in font encoding `TU' in inheritance list
+% (microtype)                `microtype.cfg/375(protrusion)'.
+%
+% They are avoided with the following, which is copied from
+% microtype.cfg, with added family, and all unknown characters
+% removed.
+\AtBeginDocument{\@ifpackageloaded{microtype}{%
+    \DeclareCharacterInheritance
+    { encoding = {EU1,EU2,TU},
+      family = {Berling} }
+    { A = {\`A,\'A,\^A,\~A,\"A,\r A},
+      a = {\`a,\'a,\^a,\~a,\"a,\r a},
+      C = {\c C},
+      c = {\c c},
+      D = {\DH},
+      d = {\dj},
+      E = {\`E,\'E,\^E,\"E},
+      e = {\`e,\'e,\^e,\"e},
+      G = {},
+      g = {},
+      I = {\`I,\'I,\^I,\"I},
+      i = {\`i,\'i,\^i,\"i,\i},
+      L = {\L},
+      l = {\l},
+      N = {\~N},
+      n = {\~n},
+      O = {\O,\`O,\'O,\^O,\~O,\"O},
+      o = {\o,\`o,\'o,\^o,\~o,\"o},
+      R = {},
+      r = {},
+      S = {\v S}, % \SS
+      s = {\v s},
+      T = {},
+      t = {},
+      U = {\`U,\'U,\^U,\"U},
+      u = {\`u,\'u,\^u,\"u},
+      Y = {\'Y,\"Y},
+      y = {\'y,\"y},
+      Z = {\v Z},
+      z = {\v z}
+    }
+  }
+}
+\fi % uufonts@mainsans
+
+% === Math, continued ===
+% Now that we have a main font.
+\ifuufonts@math
+\DeclareSymbolFont{operators}{\encodingdefault}{\familydefault}{m}{n}
+\fi
+
+% === Gill Sans ===
+\ifuufonts@sans
+\IfFileExists{./GillAltOneMT.otf}{
+  \setsansfont{GillAltOneMT.otf}[
+  BoldFont = GillAltOneMT-Bold.otf ,
+  ItalicFont = GillAltOneMT-Italic.otf ,
+  BoldItalicFont = GillAltOneMT-BoldItalic.otf]
+}{
+  \setsansfont{Gill Alt One MT}
+}
+\fi
+
+% === mono ===
+\ifuufonts@mono
+% There is no official recommendation from UU,
+% but lmtt seems to fit well.
+% That is the default for lualatex, so nothing needs to be done.
+% \setmonofont[HyphenChar=None]{Latin Modern Mono}
+\fi
+
+\else % not systemfonts
+%
+% Yield errors when fonts aren't available, but postpone them so users
+% are directed to their own file and not this file by error messages.
+% This can't be controlled as I want it. See
+% http://tex.stackexchange.com/questions/175611/how-can-i-control-which-file-errors-are-reported-in/175617
+% So put at \AtBeginDocument or \AtEndOfPackage.
+% The latter is closer to the ideal place.
+\ifuufonts@mainsans
+% Then Berling is not needed.
+\renewcommand{\familydefault}{\sfdefault}
+\else
+\IfFileExists{t1pbr.fd}{
+  \renewcommand*{\rmdefault}{pbr}
+}{
+  \AtEndOfPackage{
+    \PackageError{uufonts}
+    {The Berling font is not installed for (pdf)TeX. Maybe try lualatex instead}
+    {If you continue, that font is simply not used}}
+  \relax}
+\fi % mainsans
+
+\ifuufonts@sans
+\IfFileExists{t1mgs.fd}{
+  \renewcommand*{\sfdefault}{mgs}
+}{
+  \AtEndOfPackage{
+    \PackageError{uufonts}
+    {The Gill Sans font is not installed for (pdf)TeX. Maybe try lualatex instead}
+    {If you continue, that font is simply not used}}
+  \relax}
+\fi % sans
+
+\ifuufonts@mono
+\renewcommand*{\ttdefault}{lmtt}
+\fi
+
+% === math ===
+\ifuufonts@math
+\usepackage[libertine,cmintegrals,bigdelims,vvarbb]{newtxmath}
+% This will use the OT1 encoded version of the text font
+% "in cases where that version is known to contain upright uppercase
+% Greek letters in its [first] eleven slots".
+% That's why the warning mentioned in the next paragraph is about
+% OT1 and not T1.
+
+% Semibold in math will yield warnings, for example \boldsymbol will yield
+% LaTeX Font Warning: Font shape `OT1/pbr/sb/n' undefined
+% (Font)              using `OT1/pbr/m/n' instead on input line ...
+%
+% Substitute (without warnings) semibold (sb) with bold (b) instead of
+% current medium (m).
+% But font needs to have been selected first, so ot1pbr.fd
+% has been read.
+{\fontencoding{OT1}\fontfamily{pbr}\selectfont}
+\DeclareFontShape{OT1}{pbr}{sb}{n}
+  {<->ssub*pbr/b/n}{}
+\fi
+
+\fi % systemfonts
+\endinput

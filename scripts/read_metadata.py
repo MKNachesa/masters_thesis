@@ -18,10 +18,12 @@ speaker_meta_path = os.path.join(data_path, "person.csv")
 timestamp_path = os.path.join(data_path, "df_timestamp.parquet")
 
 save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
+filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # opening dataframes
+
 print("Opening dataframes")
 df = pd.read_parquet(riksdagen)
 df_meta = pd.read_csv(speaker_meta_path)
@@ -86,10 +88,11 @@ name_to_birthyear = dict(zip(df_meta["full_name"].str.lower(),
                              df_meta["Född"].astype(int)))
 
 df["birthyear"] = df["shortname"].apply(lambda x:
-                                        name_to_birthyear.get(x, None))
+                                        name_to_birthyear.get(x, 0)).astype(int)
 
 df["age"] = df[["birthyear", "debatedate"]].apply(lambda x:
-                    x.debatedate.year - x.birthyear, axis=1)
+                    x.debatedate.year - x.birthyear
+                    if x.birthyear > 0 else 0, axis=1).astype(int)
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -120,28 +123,31 @@ df_10[["dokid", "anforande_nummer"]].to_parquet(save_dokid, index=False)
 
 #---------------------------------------------------------------------
 # check debate timestamps
+print("Getting debate timestamps")
+
 df_timestamp["debateurl_timestamp"] = (
-
-"https://www.riksdagen.se/views/pages/embedpage.aspx?did="
-
-+ df_timestamp["dokid"]
-
-+ "&start="
-
-+ df_timestamp["start_text_time"].astype(str)
-
-+ "&end="
-
-+ (df_timestamp["end_text_time"]).astype(str)
-
+  "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
+  + df_timestamp["dokid"]
+  + "&start="
+  + df_timestamp["start_text_time"].astype(str)
+  + "&end="
+  + (df_timestamp["end_text_time"]).astype(str)
 )
 
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# Create dataframe with only speakers who have a shortname and birthday
+
+df_filt = df[(df["shortname"] != None) & (df["birthyear"] != 0)
+             & (df["over_10"] == True)]
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # save accumulated data to new file
 print("Saving everything to new file")
 df.to_parquet(save_path, index=False)
+df_filt.to_parquet(filtered_path, index=False)
 
 #---------------------------------------------------------------------
 

@@ -1,0 +1,6 @@
+# Data on party member names and their birthdays
+https://data.riksdagen.se/data/ledamoter/
+
+# Link to download metadata and audiofiles
+https://github.com/kb-labb/riksdagen_anforanden
+	- when running (at KBLab / w/ miniconda) make sure to do [ export PYTHONPATH=/home/mayanachesa/Documents/Thesis/riksdagen_anforanden ]

@@ -1,0 +1,22 @@
+dokid+anforandenummer are *not* unique
+	- GT01FöU12, 8
+	
+problems with data:
+	- some speeches have an excessively large duration, because they end when the video ends, and not when the speaker stops talking (max = 7799 seconds or > 2 hours)
+	- some speeches/speakers are reduplicated in the dataset, with speakers starting starting to talk multiple times around the same starting mark
+	- not all "start of debates" are started at 1
+	- most overlap seems to be around 60 secs (when excluding the extreme cases)
+	- 176 speakers > 10 years
+		- 176 speakers after combining proper speaker names
+	- 25 speakers > 15 years
+		- 41 speakers after combining proper speaker names
+	
+	- speakers in database have prefixes (e.g. "landsbygdsminister") and postfixes (e.g. (L)), but the same speaker might appear with different affixes. May have multiple prefixes ughhhh
+		- tredje vice talman liselott hagberg (fp)
+		- I linked speakers between the speeches and speaker metadata. This excludes some speakers cuz:
+			- error or other unexpected things in their speeches name
+				- walburga habsburg dougla (m) VS walburga habsburg douglas (m)
+			- name change (e.g. they got married)
+				- "Anna Grönlund (FP)" vs "Anna Grönlund Krantz (FP)"
+	- omg some speakers don't have a birthdate in the meta file -_-
+	

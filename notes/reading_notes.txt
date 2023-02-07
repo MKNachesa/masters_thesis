@@ -1,0 +1,27 @@
+Effects of age on the amplitude, frequency and perceived quality of voice (Lortie et al., 2015)
+	- Age affects the voice, but "the ability to increase/decrease the amplitute and frequency of voice are preserved, at least in the age range studied"
+	- i.e., voice differences are primarily observed not in connected speech. These differences are mostly observed in sustained vowels. Even mean F0 doesn't change in connected speech? Wild
+
+Oscar's thesis
+	- "Speaker recognition (SR) differs slightly from speech recognition in the way that in speaker recognition the interest is who is speaking rather than what is being said. SR can further be divided into identification, verification and diarization as shown in figure 1.1."
+	- "This thesis aims to thoroughly investigate the capabilities of existing speaker verification models." And mine tests their application on various age ranges
+	- I also need to talk about speaker verification
+	- "Speaker verification systems handle the problem of determining whether a person is the person that the system has been calibrated to or not. Consequently, SR systems typically do not handle identification (Identifying who a person is) but rather to accept or reject someone based on the probability of being the "calibrated" person"
+	- "The calibration of someone’s voice is often referred to as enrollment and involves acquiring samples of said person’s voice. The sampled voice is subsequently processed and a model of the enrollment is created. The actual verification of a voice sample (trial) from an unknown person is then often referred to as the trial/testing"
+	- I should discuss what elements may affect speaker recognition in *the same* time period (I guess these same things would also affect it over age. Essentially, these are technical points, not voice points). Then what may affect it over different ages
+	- E1: false positives; E2: false negatives. For searching a database, perhaps a high E1 is less annoying than a high E2? But it shouldn't be *too* high
+	- "Generally, the feature extraction models are trained on a lot of labelled data in order to fine-tune its feature extraction capabilities." I should check what the models are trained on. Compare that to my enrollment and trial data
+	- Enrollment and trial data may also affect verification. "This includes e.g. whether the enrollment consists of only one or more files and if they’re from varying conditions or not. The duration of the enrollment(s) and trial files may further impact the performance." At least they're all from the same conditions?
+	- I should look toward extracting the dialects of my speakers (or having smbd or a model annotate them)
+	- Btw doesn't emotion affect speaker recognition too, I should find a paper on that
+	- Should I filter out non-speech frames?
+	- "To tackle this issue the authors of [12] propose a model with a multiclass cross-entropy objective instead of an end-to-end loss, meaning that the model is trained to classify speakers instead of separating same-speaker and different-speaker pairs." Not as much an advantage as it seems. How do you add new speakers to this?
+	- "Ecapa is based on TDNNs (explained in more detail in section 2.6.1) and squeeze and excitation layers (further discussed in section 2.6.3). The inputs to the model are 80 dimensional MFCCs (section 2.4.1) with a frame-width of 25ms (10ms frame shift). Cosine similarity is used as back-end. The model is trained on the VoxCeleb2 dataset with data augmentation used. The model reached an EER of 0.87% on the VoxCeleb1 Test dataset" I need to find out what kind of data is in voxceleb1. Relatable to the parliament data?
+	- In [18] a model called TitaNet (Titanet) is developed. Titanet is built upon 1D depth-wise convolutions (section 2.6.2) with squeeze and excitation layers (section 2.6.3). VoxCeleb 1 & 2 dev, NIST SRE datasets (2004–2008), Switchboard, Fisher and Librispeech are used for training. The models are then evaluated on the VoxCeleb 1 Test dataset. An EER of 0.68% is reached" Same here. Find out what this data looks like. Maybe this model would do better on parliament data? Or worse lol cuz it's too general :')
+	- "Inference Time Consumption" I don't need to do anything in an online fashion (identify a speaker in real time) but I do need to search a database. And that should be fast enough
+	- "As the utterances are sampled from numerous different interviews that are held across venues ranging from studios to large scale events the data can be considered diverse across various conditions" And also to parliamentary speeches?
+	- "Ground truth, identity, file duration and audio-file paths are lastly saved to a text file" I can do this too and analyse the results at home ^^. See page 18/28
+	- what would be the effect of combining voiceprints from various ages on verification/recognition?
+	- my data is not from the same domain as titanet/ecapa. However, I can reference Oscar's thesis to say that that is okay
+	- so I should use TitaNet, it's better than ECAPA
+	- the results of the combined system were not discussed in Oscar's thesis?

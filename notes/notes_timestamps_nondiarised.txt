@@ -1,0 +1,13 @@
+is it normal that even if link contains an end, the vid doesn't stop there?
+
+start/end_text_time has 801 NaNs, is this correct?
+
+sometimes politicians take pauses when speaking. Does the voiceprint thing account for that?
+
+debates having wrong starts: 4 (sometimes quite a lot)
+debates having wrong ends: 4 (one example smbd starts talking through the speaker)
+
+audio has artifacts like papers, coughing, mic clipping, touching/hitting the speaker table
+
+one case of early timestamp due to audio cutting from recording lol, but this is not in theory important to having a voiceprint
+	https://www.riksdagen.se/views/pages/embedpage.aspx?did=GY01UU13&start=2921.64&end=3021.58
