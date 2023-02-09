@@ -20,3 +20,5 @@ problems with data:
 				- "Anna Grönlund (FP)" vs "Anna Grönlund Krantz (FP)"
 	- omg some speakers don't have a birthdate in the meta file -_-
 	
+	- can't match two dataframes by dokid+anforande_nummer
+		- see GT10325

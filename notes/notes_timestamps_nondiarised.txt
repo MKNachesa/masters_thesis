@@ -1,8 +1,4 @@
-is it normal that even if link contains an end, the vid doesn't stop there?
-
 start/end_text_time has 801 NaNs, is this correct?
-
-sometimes politicians take pauses when speaking. Does the voiceprint thing account for that?
 
 debates having wrong starts: 4 (sometimes quite a lot)
 debates having wrong ends: 4 (one example smbd starts talking through the speaker)
