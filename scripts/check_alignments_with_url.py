@@ -10,12 +10,11 @@ while thesis.split("\\")[-1] != "masters_thesis":
     os.chdir("..")
     thesis = os.getcwd()
 
-# thesis = "C:/Users/mayan/Documents/Language Technology Uppsala/Thesis"
-data_path = os.path.join(thesis, "metadata")#/data")
+data_path = os.path.join(thesis, "metadata")
 
 riksdagen = os.path.join(data_path, "riksdagen_speeches.parquet")
-speaker_meta_path = os.path.join(data_path, "person.csv")
 timestamp_path = os.path.join(data_path, "df_timestamp.parquet")
+filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
 
 save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
 #---------------------------------------------------------------------
@@ -26,27 +25,28 @@ print("Opening dataframes")
 ##df = pd.read_parquet(riksdagen)
 ##df_meta = pd.read_csv(speaker_meta_path)
 df_timestamp = pd.read_parquet(timestamp_path)
+df_filt = pd.read_parquet(filtered_path)
 #---------------------------------------------------------------------
 
 print("Getting debate timestamps")
 
-df_timestamp["debateurl_timestamp"] = (
+df_filt["debateurl_timestamp"] = (
   "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
-  + df_timestamp["dokid"]
+  + df_filt["dokid"]
   + "&start="
-  + df_timestamp["start_text_time"].astype(str)
+  + df_filt["start_segment"].astype(str)
   + "&end="
-  + (df_timestamp["end_text_time"]).astype(str)
+  + (df_filt["end_segment"]).astype(str)
 )
 
-num_speeches = len(df_timestamp)
+num_speeches = len(df_filt)
 
 debates_checked = set()
 
 while len(debates_checked) != 50:
     debate_row = random.randint(0, num_speeches-1)
 
-    debate = df_timestamp.iloc[debate_row]
+    debate = df_filt.iloc[debate_row]
 
     dokid = debate["dokid"]
     anfnummer = debate["anforande_nummer"]

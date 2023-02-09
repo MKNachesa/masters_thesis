@@ -64,6 +64,20 @@ def print_df_data(df, filt=False):
     std_speeches = num_debs_per_speaker.std()[0]
     print(f"Mean speeches per speaker: {mean_speeches:.0f}, std: {std_speeches:.0f}")
 
+    num_debs_per_speaker = df.groupby(["shortname", "debateyear"])\
+        .agg(["count"])["dokid"]
+    mean_speeches = num_debs_per_speaker.mean()[0]
+    std_speeches = num_debs_per_speaker.std()[0]
+    print(f"Mean speeches per speaker per year: {mean_speeches:.0f}, \
+std: {std_speeches:.0f}")
+
+##    mean_speech_length = df.groupby("duration_segment")\
+##        .agg(["mean"])["dokid"]
+    mean_length = df["duration_segment"].mean()
+    std_length = df["duration_segment"].std()
+    print(f"Mean speech_length: {mean_length:.0f}, \
+std: {std_length:.0f}")
+
 print_df_data(df)
 print()
 print_df_data(df_filt, True)

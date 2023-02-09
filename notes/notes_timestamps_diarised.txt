@@ -1,0 +1,7 @@
+check 
+	- for NaNs
+	- "acoustics" (echo n whatever)
+	- loudness
+
+debates having wrong starts: 0
+debates having wrong ends: 0

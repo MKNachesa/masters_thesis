@@ -16,6 +16,7 @@ data_path = os.path.join(thesis, "metadata")#/data")
 riksdagen = os.path.join(data_path, "riksdagen_speeches.parquet")
 speaker_meta_path = os.path.join(data_path, "person.csv")
 timestamp_path = os.path.join(data_path, "df_timestamp.parquet")
+diarisation_path = os.path.join(data_path, "df_diarization.parquet")
 
 save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
 filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
@@ -28,6 +29,60 @@ print("Opening dataframes")
 df = pd.read_parquet(riksdagen)
 df_meta = pd.read_csv(speaker_meta_path)
 df_timestamp = pd.read_parquet(timestamp_path)
+df_diarise = pd.read_parquet(diarisation_path)
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# preprocess duplicate rows
+
+df["dokid_anfnummer"] = df.apply(
+    lambda x: f"{x.dokid}_{x.anforande_nummer}", axis=1)
+df_diarise["dokid_anfnummer"] = df_diarise.apply(
+    lambda x: f"{x.dokid}_{x.anforande_nummer}", axis=1)
+
+print("Deduplicating full metadata and diarised metadata")
+dup_speeches = [False]
+duplicate_ids = set()
+for i, row in df[1:].iterrows():
+    cur_debate = row["dokid_anfnummer"]
+    prev_debate = df.iloc[i-1]["dokid_anfnummer"]
+##    cur_speaker = row["text_lower"]
+##    prev_speaker = df.iloc[i-1]["text_lower"]
+    if cur_debate==prev_debate:
+        dup_speeches.append(True)
+        duplicate_ids.add(cur_debate)
+    else:
+        dup_speeches.append(False)
+df["dup_speech"] = dup_speeches
+df = df[df["dup_speech"] == False].reset_index(drop=True)
+df["dup_id"] = df["dokid_anfnummer"].apply(
+    lambda x: x in duplicate_ids)
+
+df = df[df["dup_id"] == False].reset_index(drop=True)
+
+diarise_ids = set(df_diarise["dokid_anfnummer"].tolist())
+df["in_diarise"] = df["dokid_anfnummer"].apply(
+    lambda x: x in diarise_ids)
+
+ids = set(df["dokid_anfnummer"].tolist())
+df_diarise["in_full"] = df_diarise["dokid_anfnummer"].apply(
+    lambda x: x in ids)
+
+df = df[df["in_diarise"] == True].reset_index(drop=True)
+df_diarise = df_diarise[df_diarise["in_full"] == True].reset_index(drop=True)
+
+df_diarise_cols = df_diarise.columns.tolist()
+for col in df_diarise_cols:
+    if col in df.columns:
+        df_diarise = df_diarise.drop(col, axis=1)
+
+df = pd.concat([df, df_diarise], axis=1)
+
+# get rid of short debates with bad diarisation
+df = df[((df["length_ratio"] >= 0.7)
+         & (df["length_ratio"] <= 1.3))
+         & (df["duration_segment"] >= 20)].reset_index(drop=True)
+
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -42,20 +97,6 @@ df_timestamp = pd.read_parquet(timestamp_path)
 print("Preprocessing speakers")
 
 df["text_lower"] = df["text"].apply(lambda x: x.lower())
-
-# remove duplicate rows
-dup_speakers = [False]
-for i, row in df[1:].iterrows():
-    cur_debate = row["dokid"]
-    prev_debate = df.iloc[i-1]["dokid"]
-    cur_speaker = row["text_lower"]
-    prev_speaker = df.iloc[i-1]["text_lower"]
-    if cur_debate==prev_debate and cur_speaker==prev_speaker:
-        dup_speakers.append(True)
-    else:
-        dup_speakers.append(False)
-df["dup_speaker"] = dup_speakers
-df = df[df["dup_speaker"] == False].reset_index()
 
 # finding names of speakers w/o pre- and postfixes
 df_meta["full_name"] = df_meta.apply(
@@ -116,7 +157,7 @@ for speaker in set(df["shortname"].to_list()):
 df["over_10"] = df["shortname"].apply(lambda x: x in over_10)
 df["over_15"] = df["shortname"].apply(lambda x: x in over_15)
 
-df_10 = df[df["over_10"] == True].reset_index()
+df_10 = df[df["over_10"] == True].reset_index(drop=True)
 save_dokid = os.path.join(data_path, "dokid_anfnum_over10_speeches.parquet")
 df_10[["dokid", "anforande_nummer"]].to_parquet(save_dokid, index=False)
 #---------------------------------------------------------------------
@@ -132,6 +173,15 @@ df_timestamp["debateurl_timestamp"] = (
   + df_timestamp["start_text_time"].astype(str)
   + "&end="
   + (df_timestamp["end_text_time"]).astype(str)
+)
+
+df["debateurl_timestamp"] = (
+  "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
+  + df["dokid"]
+  + "&start="
+  + df["start_segment"].astype(str)
+  + "&end="
+  + (df["end_segment"]).astype(str)
 )
 
 #---------------------------------------------------------------------
