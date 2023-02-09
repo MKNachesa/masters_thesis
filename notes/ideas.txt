@@ -8,3 +8,17 @@
 	- my research is so inclusive and debiasing :)
 - draw my own plots for F0?
 - visualise with t-SNE
+- how to combine multiple voiceprints?
+	- should VP contribution be based on length of file?
+		- maybe only if files very short
+	- if yes, should this follow a linear or other scale?
+- selecting speakers
+	- drop speaker if not in all 10+ years
+	- speakers per bucket dropping
+	- exclude duplicates cuz annoying (if doesn't affect buckets)
+- selecting pairs
+	- take embedding from the middle of age range
+	- but also compare edge-cases (so does vp at 19 compare to vp at 29?)
+- stuff that doesn't affect VPs (read about it)
+	- silences
+	- noise (like papers)
