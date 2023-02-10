@@ -2,3 +2,4 @@
 metadata/riksdagen_speeches.parquet
 metadata/riksdagen_speeches_with_ages.parquet
 metadata/filtered_speeches.parquet
+metadata/riksdagen_speeches_old.parquet

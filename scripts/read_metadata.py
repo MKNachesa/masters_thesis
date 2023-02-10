@@ -40,55 +40,56 @@ df["dokid_anfnummer"] = df.apply(
 df_diarise["dokid_anfnummer"] = df_diarise.apply(
     lambda x: f"{x.dokid}_{x.anforande_nummer}", axis=1)
 
+# deduplicate rows
 print("Deduplicating full metadata and diarised metadata")
 dup_speeches = [False]
 duplicate_ids = set()
+ids_seen = set(df.iloc[0]["dokid_anfnummer"])
 for i, row in df[1:].iterrows():
     cur_debate = row["dokid_anfnummer"]
-    prev_debate = df.iloc[i-1]["dokid_anfnummer"]
-##    cur_speaker = row["text_lower"]
-##    prev_speaker = df.iloc[i-1]["text_lower"]
-    if cur_debate==prev_debate:
+    if cur_debate in ids_seen:
         dup_speeches.append(True)
+        df.loc[i-1, "text"] = "UNK"
         duplicate_ids.add(cur_debate)
     else:
         dup_speeches.append(False)
+    ids_seen.add(cur_debate)
 df["dup_speech"] = dup_speeches
 df = df[df["dup_speech"] == False].reset_index(drop=True)
-df["dup_id"] = df["dokid_anfnummer"].apply(
-    lambda x: x in duplicate_ids)
-
-df = df[df["dup_id"] == False].reset_index(drop=True)
 
 diarise_ids = set(df_diarise["dokid_anfnummer"].tolist())
 df["in_diarise"] = df["dokid_anfnummer"].apply(
     lambda x: x in diarise_ids)
-
-ids = set(df["dokid_anfnummer"].tolist())
-df_diarise["in_full"] = df_diarise["dokid_anfnummer"].apply(
-    lambda x: x in ids)
-
 df = df[df["in_diarise"] == True].reset_index(drop=True)
-df_diarise = df_diarise[df_diarise["in_full"] == True].reset_index(drop=True)
 
+# remove duplicate columns
+df.set_index("dokid_anfnummer", inplace=True)
+df_diarise.set_index("dokid_anfnummer", inplace=True)
+
+##df_diarise["dokid_anfnummer2"] = df_diarise["dokid_anfnummer"]
+##df_diarise["dokid2"] = df_diarise["dokid"]
 df_diarise_cols = df_diarise.columns.tolist()
 for col in df_diarise_cols:
     if col in df.columns:
         df_diarise = df_diarise.drop(col, axis=1)
 
-df = pd.concat([df, df_diarise], axis=1)
+##df = pd.concat([df, df_diarise], axis=1)
+df = df.join(df_diarise)
 
-# get rid of short debates with bad diarisation
-df = df[((df["length_ratio"] >= 0.7)
-         & (df["length_ratio"] <= 1.3))
-         & (df["duration_segment"] >= 20)].reset_index(drop=True)
+df.reset_index(inplace=True)
+df_diarise.reset_index(inplace=True)
+
+if False:
+    # get rid of short debates with bad diarisation
+    df = df[((df["length_ratio"] >= 0.7)
+             & (df["length_ratio"] <= 1.3))
+             & (df["duration_segment"] >= 20)].reset_index(drop=True)
 
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # preprocessing speakers by
 #   - lowercasing the name in speeches file ("text_lower")
-#   - removing duplicate rows
 #   - finding their name w/o pre- and postfixes in the metafile
 #     and adding that in a new column ("shortname")
 #       - this will omit a few speakers but that is a chance I'm willing to take
@@ -97,6 +98,28 @@ df = df[((df["length_ratio"] >= 0.7)
 print("Preprocessing speakers")
 
 df["text_lower"] = df["text"].apply(lambda x: x.lower())
+
+# take care of UNK speakers
+print("Taking care of UNK speakers")
+dokids = set(df["dokid"].tolist())
+print(len(dokids))
+for j, dokid in enumerate(dokids):
+    if (j+1) % 500 == 0:
+        print(j+1)
+    label_to_text = dict()
+    i_to_proc = []
+
+    for i, row in df[df["dokid"] == dokid].iterrows():
+        text = row["text_lower"]
+        label = row["label"]
+        if text != "unk":
+            label_to_text[label] = text
+        else:
+            i_to_proc.append(i)
+
+    for i in i_to_proc:
+        label = df.iloc[i]["label"]
+        df.at[i, "text_lower"] = label_to_text.get(label, "unk")
 
 # finding names of speakers w/o pre- and postfixes
 df_meta["full_name"] = df_meta.apply(
@@ -175,14 +198,15 @@ df_timestamp["debateurl_timestamp"] = (
   + (df_timestamp["end_text_time"]).astype(str)
 )
 
-df["debateurl_timestamp"] = (
-  "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
-  + df["dokid"]
-  + "&start="
-  + df["start_segment"].astype(str)
-  + "&end="
-  + (df["end_segment"]).astype(str)
-)
+if False:
+    df["debateurl_timestamp"] = (
+      "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
+      + df["dokid"]
+      + "&start="
+      + df["start_segment"].astype(str)
+      + "&end="
+      + (df["end_segment"]).astype(str)
+    )
 
 #---------------------------------------------------------------------
 
@@ -195,9 +219,11 @@ df_filt = df[(df["shortname"] != None) & (df["birthyear"] != 0)
 
 #---------------------------------------------------------------------
 # save accumulated data to new file
-print("Saving everything to new file")
-df.to_parquet(save_path, index=False)
-df_filt.to_parquet(filtered_path, index=False)
+
+if False:
+    print("Saving everything to new file")
+    df.to_parquet(save_path, index=False)
+    df_filt.to_parquet(filtered_path, index=False)
 
 #---------------------------------------------------------------------
 
