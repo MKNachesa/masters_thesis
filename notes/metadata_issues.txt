@@ -22,3 +22,30 @@ problems with data:
 	
 	- can't match two dataframes by dokid+anforande_nummer
 		- see GT10325
+		
+	- Some text is missing? 
+		- see GS01FIU20_37. Roger Tiefensee's text is *nowhere* to be found in the debates euh
+		
+	- text in anforanden isn't *transcribed* properly, so that makes ASR matching hard lol
+		- GT01SoU6 magdalena andersson 01:42:05
+		
+notes on cleaning up data:
+	- removed double dokid+anforandenummers
+	- removed speakers whose name could not be extracted
+	- removed speakers without a birthyear
+	- removed speakers active for < 10 years
+	- removed speeches where nr_speech_segments = NaN
+	- only kept speeches where nr_speech_segments == 1.0
+		- takes care of at least 2 files where the speaker is wrong
+	- removed speeches without a valid audio
+	- kept speeches where 0.7 <= length_ratio <= 1.3
+	- kept speeches where 0.7 <= overlap_ratio <= 1.3
+	- removed speeches where speakers mention themselves
+	- removed speeches shorter than 20 secs
+	- try to filter out speeches that overlap with each other?
+		- see GR01TU10_89 and GR01TU10_90
+		- first, remove speeches that do not monotonically follow each other, e.g., GS01UBU3_139 and GS01UBU3_138 (names there are wrong as well). See if this fixes self-naming issue
+	- no year had a speaker with no activity
+	
+Sometimes speeches are cut up:
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01TU14&start=3413.4328125&end=3509.3334375000004 (leads to early start as well)

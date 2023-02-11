@@ -4,4 +4,42 @@ check
 	- loudness
 
 debates having wrong starts: 0
-debates having wrong ends: 0
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GY1018&start=340.12406250000004&end=557.6259375000001 by like 10 secs (speaker had to move to right table)
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H401JuU1&start=10553.8359375&end=10622.213437499999 tallman intro few secs
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H9C120220331fs&start=618.9496875000001&end=653.1553125 tallman intro few secs
+debates having wrong ends: 1
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H501MJU22&start=7179.477187500001&end=7305.5840625 "tack" in last sec
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H5C120171123fs&start=4019.1778125&end=4084.5178125 smbd says "tack" before end
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GW10555&start=434.23593750000003&end=682.7878125000001 "tack" before end
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H901TU15&start=4425.831562500001&end=4547.196562500001 "tack" in last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GY1018&start=340.12406250000004&end=557.6259375000001 "tack" in last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H9C120220217fs&start=1727.7890625000005&end=1791.5934375000002 "tack" in last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H3C120160414fs&start=2241.1265625000005&end=2274.2690625000005 "tack" about 5 secs before end
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GW10555&start=434.23593750000003&end=682.7878125000001 "tack" last sec
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GV10390&start=2142.7115625000006&end=2273.1046875 "tack" last sec
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H21098&start=497.38218750000004&end=742.9640625000001 "tack" last sec
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H001FiU24&start=34.4671875&end=704.1515625000001 maybe "tack" last sec
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H310252&start=111.1640625&end=345.0009375 "tack" last few secs
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H31071&start=735.8428125&end=983.5340625000001 "tack" last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H9C120220217fs&start=1727.7890625000005&end=1791.5934375000002 "tack" last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H9C120220616sf&start=1966.7728125000003&end=2031.4378125000003 clapping, "tack" last second
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H3C120160414fs&start=2241.1265625000005&end=2274.2690625000005 random speaking last sec
+	
+can't trust on-screen names:
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=H110146&start=460.6284375&end=667.8196875000001 this is in fact Ylva Johansson
+	
+some debates are WAY too quiet to use probably?:
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GT10471&start=682.8890625&end=937.6846875000001 GT10471
+	
+Wrong speaker, way wrong start (nr_speech_segments=3)
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01SFU15&start=2347.9959375&end=3360.1753125000005 GR01SFU15 (don't mean to complain, but both birgitta carlsson andMona Jönsson are *not* tomas eneroth)
+	
+nr_speech_segments:
+	1: 52012 cases
+	2: 810 cases, 1 really wrong
+		- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01TU10&start=7116.7359375000015&end=7899.465937500001 includes speech of previous speaker
+		- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GS01FÖU5&start=24149.247187500005&end=24407.147812500003 wrong speaker, but right text
+		- most have a sec (few secs) before jumping to the right speaker
+	3: 71 cases, 6 good, 1 wrong, but then like REALLY wrong
+		- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01SFU15&start=2347.9959375&end=3360.1753125000005, issue is some of the audio is missing. However, this file also has a low overlap_ratio (0.61313). Length ratio = 1.217586
+	4: 1 case, not a problem

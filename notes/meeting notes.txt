@@ -5,4 +5,6 @@ Faton:
 	- 
 	
 Sara:
-	- 
+	- motivation, how related to other fields n stuff, position yourself, RQs, what am I doing, main results
+	- background = Related Work, *not* mine
+	- summary: what I'm gonna do, what is my contribution/identify niche. show I can identify relevant RQs. Say it's at the beginning. More like a research proposal. Section about expected results, hypotheses, how I could interpret the results, "this is what I'm doing cuz I want to learn this"

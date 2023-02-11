@@ -50,10 +50,12 @@ while len(debates_checked) != 50:
 
     dokid = debate["dokid"]
     anfnummer = debate["anforande_nummer"]
+    speaker = debate["shortname"]
+    text = debate["anftext"]
 
     anf_id = dokid+"_"+str(anfnummer)
     
-    end = debate["end_text_time"]
+    end = debate["end_segment"]
 
     if anf_id not in debates_checked and not np.isnan(end):
         debates_checked.add(anf_id)
@@ -68,6 +70,8 @@ while len(debates_checked) != 50:
 
         print(url)
         print(end_time)
+        print(speaker)
+        print(text[:75])
 
         input(f"Processed {len(debates_checked)} debates")
         print()

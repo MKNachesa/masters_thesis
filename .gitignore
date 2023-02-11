@@ -1,5 +1,5 @@
 #ignore huge parquet file
 metadata/riksdagen_speeches.parquet
+metadata/riksdagen_speeches_filt_corrupt.parquet
 metadata/riksdagen_speeches_with_ages.parquet
-metadata/filtered_speeches.parquet
-metadata/riksdagen_speeches_old.parquet
+metadata/riksdagen_speeches_filt_bleu.parquet

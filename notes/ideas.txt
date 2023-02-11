@@ -3,6 +3,7 @@
 	- if not: stable across emotions!
 	- do this first (before seeing if different emotions compete with recognising people through voiceprints)!
 	- on uppmax	
+	- use R&D as baseline
 - check if result same for VPs of 30 secs vs 5 mins
 - mention that research is in swedish so age on voice might not apply the same!
 	- my research is so inclusive and debiasing :)
