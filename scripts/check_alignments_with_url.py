@@ -5,55 +5,78 @@ import numpy as np
 
 #---------------------------------------------------------------------
 # data paths
-thesis = os.getcwd()
-while thesis.split("\\")[-1] != "masters_thesis":
-    os.chdir("..")
+same_folder = "n"
+print_message = True
+
+if print_message:
+    print("""This script reads the data file \
+'downsize_filtered_speeches.parquet'.
+The script and the data need to be in either of two configurations:
+  - this script and the data file are in the same folder
+  - this script and this file are part of the following directory structure:
+    - masters_thesis
+      |_ metadata
+         |_ data_file
+      |_ scripts
+         |_ this script
+
+Please make sure you follow either of these two configurations.
+
+If you wish to suppress this message, open this script and set the variable
+'same_folder' to either 'y' or 'n' and 'print_message' to False.
+""")
+
+    same_folder = input("Is this script in the same folder as the data? [y/n] ")
+    print()
+    while same_folder not in {"y", "n"}:
+        print(f"{same_folder} is not valid input")
+        same_folder = input(
+            "Is this script in the same folder as the data? [y/n] ")
+        print()
+
+assert same_folder in {"y", "n"}
+
+if same_folder == "y":
+##    filtered_path = "filtered_speeches.parquet"
+    downsize_path = "downsize_filtered_speeches.parquet"
+
+else:
     thesis = os.getcwd()
+    while thesis.split("\\")[-1] != "masters_thesis":
+        os.chdir("..")
+        thesis = os.getcwd()
 
-data_path = os.path.join(thesis, "metadata")
+    data_path = os.path.join(thesis, "metadata")
 
-riksdagen = os.path.join(data_path, "riksdagen_speeches.parquet")
-timestamp_path = os.path.join(data_path, "df_timestamp.parquet")
-filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
-
-save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
+##    filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
+    downsize_path = os.path.join(data_path,
+                                 "downsize_filtered_speeches.parquet")
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # opening dataframes
-print("Opening dataframes")
-##df = pd.read_parquet(riksdagen)
-##df_meta = pd.read_csv(speaker_meta_path)
-df_timestamp = pd.read_parquet(timestamp_path)
+print("Opening dataframes\n")
 df_filt = pd.read_parquet(filtered_path)
+df_downsize = pd.read_parquet(downsize_path)
 #---------------------------------------------------------------------
 
-print("Getting debate timestamps")
-
-df_filt["debateurl_timestamp"] = (
-  "https://www.riksdagen.se/views/pages/embedpage.aspx?did="
-  + df_filt["dokid"]
-  + "&start="
-  + df_filt["start_segment"].astype(str)
-  + "&end="
-  + (df_filt["end_segment"]).astype(str)
-)
-
-num_speeches = len(df_filt)
+num_speeches = len(df_downsize)
 
 debates_checked = set()
+num_of_speeches_to_check = 50
 
-while len(debates_checked) != 50:
+print("""Checking {num_of_speeches_to_check} speeches.
+After each speech, press any key to continue
+""")
+
+while len(debates_checked) != num_of_speeches_to_check:
     debate_row = random.randint(0, num_speeches-1)
 
-    debate = df_filt.iloc[debate_row]
+    debate = df_downsize.iloc[debate_row]
 
-    dokid = debate["dokid"]
-    anfnummer = debate["anforande_nummer"]
+    anf_id = debate["dokid_anfnummer"]
     speaker = debate["shortname"]
     text = debate["anftext"]
-
-    anf_id = dokid+"_"+str(anfnummer)
     
     end = debate["end_segment"]
 
@@ -68,10 +91,11 @@ while len(debates_checked) != 50:
         hours = str(int(rest/60)).zfill(2)
         end_time = f"{hours}:{mins}:{secs}"
 
-        print(url)
-        print(end_time)
-        print(speaker)
-        print(text[:75])
+        print(f"speech id: {anf_id}")
+        print(f"end time: {end_time}")
+        print(f"speaker: {speaker}")
+        print(f"text: {text[:70]}")
+        print(f"url: {url}")
 
         input(f"Processed {len(debates_checked)} debates")
         print()

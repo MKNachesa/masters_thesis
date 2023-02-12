@@ -20,6 +20,7 @@ diarisation_path = os.path.join(data_path, "df_diarization.parquet")
 
 save_path = os.path.join(data_path, "riksdagen_speeches_with_ages.parquet")
 filtered_path = os.path.join(data_path, "filtered_speeches.parquet")
+downsize_path = os.path.join(data_path, "downsize_filtered_speeches.parquet")
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -290,6 +291,12 @@ df_filt = df_filt[df_filt[["anftext", "shortname"]].apply(
     lambda x: x.shortname not in x.anftext.lower(), axis=1)]
 
 df_filt = df_filt[df_filt["duration_segment"] >= 20]
+
+df_filt = df_filt.reset_index(drop=True)
+
+df_downsize = df_filt[["anftext", "dokid_anfnummer", "start_segment",
+                    "end_segment", "shortname",
+                    "debateurl_timestamp"]].reset_index(drop=True)
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -299,11 +306,37 @@ if True:
     print("Saving everything to new file")
     df.to_parquet(save_path, index=False)
     df_filt.to_parquet(filtered_path, index=False)
+    df_downsize.to_parquet(downsize_path, index=False)
 
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 if False:
+    #--------------------------------------------------
+    # check each speech's overlap with the next
+    for i, row in df_filt[:-1].iterrows():
+        start = row["start_segment"]
+        end = row["end_segment"]
+        dokid = row["dokid"]
+        next_start = df_filt.loc[i+1]["start_segment"]
+        next_end = df_filt.loc[i+1]["end_segment"]
+        next_dokid = df_filt.loc[i+1]["dokid"]
+
+        if end > next_start and dokid == next_dokid and start < next_end:
+            overlap = end - next_start
+            if overlap < 1:
+                continue
+            print(overlap)
+            overlap_ratio = row["overlap_ratio"]
+            next_overlap_ratio = df_filt.loc[i+1]["overlap_ratio"]
+            print(i, overlap, overlap_ratio, next_overlap_ratio, "\n",
+                  start, end, "\n", next_start, next_end)
+            inp = input()
+            if inp == "b":
+                break
+
+    #--------------------------------------------------
+        
     deb_durs = df_10.groupby(["text_lower"], as_index=False)["duration"].sum()
 
     # bleu scores are not better for later years

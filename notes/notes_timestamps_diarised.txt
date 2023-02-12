@@ -31,8 +31,8 @@ can't trust on-screen names:
 some debates are WAY too quiet to use probably?:
 	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GT10471&start=682.8890625&end=937.6846875000001 GT10471
 	
-Wrong speaker, way wrong start (nr_speech_segments=3)
-	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01SFU15&start=2347.9959375&end=3360.1753125000005 GR01SFU15 (don't mean to complain, but both birgitta carlsson andMona Jönsson are *not* tomas eneroth)
+Wrong speaker, way wrong start (nr_speech_segments=3) (not contained in final df_filt)
+	- https://www.riksdagen.se/views/pages/embedpage.aspx?did=GR01SFU15&start=2347.9959375&end=3360.1753125000005 GR01SFU15 (don't mean to complain, but both birgitta carlsson and Mona Jönsson are *not* tomas eneroth)
 	
 nr_speech_segments:
 	1: 52012 cases

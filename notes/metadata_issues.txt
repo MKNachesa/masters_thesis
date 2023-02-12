@@ -31,16 +31,21 @@ problems with data:
 		
 notes on cleaning up data:
 	- removed double dokid+anforandenummers
+		- wrong annotation, painful to deal with
 	- removed speakers whose name could not be extracted
+		- because then I couldn't find their birthyear
 	- removed speakers without a birthyear
 	- removed speakers active for < 10 years
-	- removed speeches where nr_speech_segments = NaN
 	- only kept speeches where nr_speech_segments == 1.0
 		- takes care of at least 2 files where the speaker is wrong
+		- related to diarisation, something among the lines of "how many remaining speech segments there were within this clip". I still need to go through this a couple of times to understand it
 	- removed speeches without a valid audio
 	- kept speeches where 0.7 <= length_ratio <= 1.3
+		- length_ratio = how much longer/shorter the speech segments predicted by diarisation are compared to those predicted by ASR
 	- kept speeches where 0.7 <= overlap_ratio <= 1.3
+		 - of the time covered by the ASR prediction, how much of that does diarisation cover? Goes between 0 for no overlap to 1 for 100% overlap
 	- removed speeches where speakers mention themselves
+		- I figure it is unlikely speakers do so, and this is related to wrong annotation
 	- removed speeches shorter than 20 secs
 	- removed speeches that didn't follow each other linearly, as that caused diarisation issues
 		- e.g. GS01UBU3_139 and GS01UBU3_138: 139 was before 138, but the timestamp associated with 139 came after 138, but the speaker was *not* correct
@@ -48,8 +53,8 @@ notes on cleaning up data:
 		6184     lena hallengren               139    5621.999063
 		6185   christer nylander               138    5575.829063
 		6186   christer nylander               140    5647.598438
-	- try to filter out speeches that overlap with each other?
-		- taken care of by point above
+		- mostly related to wrong annotation that this took care of
+		- also took care of speeches that would otherwise have overlapped each other significantly (i.e. one speech containing the other)
 	- no year had a speaker with no activity
 	
 Sometimes speeches are cut up:
