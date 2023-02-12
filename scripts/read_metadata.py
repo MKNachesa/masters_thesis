@@ -251,6 +251,25 @@ df["debateurl_timestamp"] = (
 #---------------------------------------------------------------------
 # Create dataframe with only speakers who have a shortname and birthday
 
+# get rid of non-monotonically increasing speeches
+print("Getting rid of non-monotonically following speeches")
+dokids = set(df["dokid"].tolist())
+non_monotonic = set()
+for i, dokid in enumerate(dokids):
+    if (i+1) % 1000 == 0:
+        print(f"Processed {i+1} debates")
+    mini_df = df[df["dokid"] == dokid]
+    for i, row in mini_df[1:].iterrows():
+        anf = row["anforande_nummer"]
+        prev_anf = mini_df.loc[i-1]["anforande_nummer"]
+        if prev_anf > anf:
+            anf = row["dokid_anfnummer"]
+            prev_anf = mini_df.loc[i-1]["dokid_anfnummer"]
+            non_monotonic.add(prev_anf)
+            non_monotonic.add(anf)
+
+df_filt = df[df["dokid_anfnummer"].apply(lambda x: x not in non_monotonic)]
+
 df_filt = df[(~df["shortname"].isna()) & (df["birthyear"] != 0)
              & (df["over_10"] == True)]
 
