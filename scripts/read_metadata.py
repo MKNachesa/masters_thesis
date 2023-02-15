@@ -250,6 +250,22 @@ df["debateurl_timestamp"] = (
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
+# get speaker speaking ranges. I.e., did they speak in all the years between
+# their first and last debate, or only some?
+
+##df_filt["min_age"] = df_filt.groupby(["shortname"])["age"].transform("min")
+##df_filt["max_age"] = df_filt.groupby(["shortname"])["age"].transform("max")
+##df_filt["age_range"] = df_filt[["min_age", "max_age"]].apply(
+##    lambda x: set(range(int(x.min_age), int(x.max_age)+1)), axis=1)
+##
+##sp_to_range = df_filt.groupby(["shortname"])["age"].apply(set).to_dict()
+##df_filt["actual_age_range"] = df_filt.apply(lambda x: sp_to_range[x])
+##df_filt["spoke_all_years"] = df_filt[["actual_age_range", "age_range"]].apply(
+##    lambda x: x.actual_age_range == x.age_range, axis=1)
+
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
 # Create dataframe with only speakers who have a shortname and birthday
 
 # get rid of non-monotonically increasing speeches
@@ -290,10 +306,34 @@ df_filt = df_filt[(df_filt["overlap_ratio"] > 0.7)
 df_filt = df_filt[df_filt[["anftext", "shortname"]].apply(
     lambda x: x.shortname not in x.anftext.lower(), axis=1)]
 
-df_filt = df_filt[df_filt["duration_segment"] >= 20]
+# only keep speeches at least 80 secs long
+df_filt = df_filt[df_filt["duration_segment"] >= 80]
 
+# get only those speakers who spoke all 10+ years they were active
+df_filt["min_age"] = df_filt.groupby(["shortname"])["age"].transform("min")
+df_filt["max_age"] = df_filt.groupby(["shortname"])["age"].transform("max")
+df_filt["age_range"] = df_filt[["min_age", "max_age"]].apply(
+    lambda x: set(range(int(x.min_age), int(x.max_age)+1)), axis=1)
+
+sp_to_range = df_filt.groupby(["shortname"])["age"].apply(set).to_dict()
+df_filt["actual_age_range"] = df_filt["shortname"].apply(
+    lambda x: sp_to_range[x])
+df_filt["spoke_all_years"] = df_filt[["actual_age_range", "age_range"]].apply(
+    lambda x: x.actual_age_range == x.age_range, axis=1)
+
+df_filt = df_filt[df_filt["spoke_all_years"] == True]
+
+# only keep speakers who have at least 3 speeches every year
+at_least_3 = df_filt.groupby(
+    ["shortname", "age"]).agg("count")["party"].to_dict()
+df_filt["at_least_3"] = df_filt[["shortname", "age"]].apply(
+    lambda x: at_least_3[(x.shortname, x.age)] >= 3, axis=1)
+df_filt = df_filt[df_filt["at_least_3"] == True]
+
+# reset index
 df_filt = df_filt.reset_index(drop=True)
 
+# create smaller dataframe for putting on github and checking speeches
 df_downsize = df_filt[["anftext", "dokid_anfnummer", "start_segment",
                     "end_segment", "shortname",
                     "debateurl_timestamp"]].reset_index(drop=True)

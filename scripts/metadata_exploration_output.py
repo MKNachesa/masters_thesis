@@ -78,6 +78,12 @@ std: {std_speeches:.0f}")
     print(f"Mean speech_length: {mean_length:.0f}, \
 std: {std_length:.0f}")
 
+# doesn't work in this file for some reason
+##    starting_speaking_ages = sorted(list(set(
+##        df.groupby("shortname").agg("min")["age"].tolist())))
+##    print(f"Starting ages of speakers: \
+##{', '.join(list(map(str, starting_speaking_ages)))}")
+
 print_df_data(df)
 print()
 print_df_data(df_filt, True)
