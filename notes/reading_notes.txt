@@ -25,3 +25,68 @@ Oscar's thesis
 	- my data is not from the same domain as titanet/ecapa. However, I can reference Oscar's thesis to say that that is okay
 	- so I should use TitaNet, it's better than ECAPA
 	- the results of the combined system were not discussed in Oscar's thesis?
+	
+TITANET: NEURAL MODEL FOR SPEAKER REPRESENTATION WITH 1D DEPTH-WISE SEPARABLE CONVOLUTIONS AND GLOBAL CONTEXT (Koluguri, Park, and Ginsburg, 2022)
+	- They also mention some previous work on this, check it out
+	- Speaker verification and diarisation
+		- Train: VoxCeleb1, VoxCeleb2 dev, NIST SRE portion of datasets from 2004-2008 (LDC2009E100), Switchboard-Cellular1, Switchboard-Cellular-2, Fisher, Librispeech. Augmented with RIR impulse corpora, speed perturbation with 0.95x and 1.05x speeds, spec augment
+			- Check which languages these are; contrast with Swedish in my work
+		- Test: 
+			- Verification: VoxCeleb1 cleaned test trial file
+			- Diarisation: NIST-SRE-2000 (all sessions from LDC2001S97), AMI corpus (Lapel and MixHeadset audio subsets from partition set), CH109 (subset of CALLHOME American English speech, CHAES, w/ only 2 speakers)
+	- Based on ContextNet ASR
+		- Encoder: 
+			- B convolution, batch-normalisation, ReLU, and dropout blocks
+			- R sub-blocks per block
+			- C filters in convolution layer of each block
+			- prologue and epilogue block; set number of parameters
+			- TitaNet size depends on R for depth and C for width
+			- squeeze and excitation (SE) residual layers in each block 
+		- Decoder:
+			- Attention Pooling (attentive statistics pooling) for time-independent feature representation S of size Bx3072
+			- ** Linear layer of size 192 (what eventually represents the voice print/VP) **
+			- Linear layer with N classes to train on dataset
+	- Fancy Angular Angular Margin (AAM) loss. Optimises cosine distance between speaker embeddings
+	- Cosine similarity back-end
+	- 3 model sizes, outperform SOTA on speaker verification and diarsiation while using fewer parameters
+		- Except for ECAPA
+	- they do seem to input MFCCs and cut up the audio in small chunks? Not sure how that works with the model they provide for use
+	- mention terms like t-vector (what they use), x-vector, i-vector, d-vector
+	
+Multi-scale Speaker Diarization with Dynamic Scale Weighting (Park et al, 2022)
+	- Contributions:
+		- overlap-aware diarisation
+		- improved temporal resolution
+			- trade-off between temporal resolution and quality of representation
+			- would like short segments
+				- cuz sometimes very short speech, but that gives worse representation
+		- flexible number of speakers 
+			- cuz e.g. sequence-based models trained on fixed # of speakers
+	- Architecture:
+		- TitaNet
+		- Multi-scale speaker clustering module
+		- Multi-scale Diarisation Decoder (MSDD) module
+			- Split into
+				- Multi-scale Cosine Similarity
+				- Scale Weight calculation
+			- Then merged into
+				- Sequence model
+				
+Voiceprints analysis using MFCC and SVM for detecting patients with Parkinson’s disease (Benba et al., 2015)
+	- Language-independent: voiceprints extracted from sustained vowel /a/
+	- MFCCs averaged frames averaged over coefficients, yielding a total of 20 coefficients
+	- Accuracy, Sensitivity and Specificity best when using Linear Kernels SVM and first 12 coefficients of MFCC
+	
+Human Recognition using Voice Print in LabVIEW (Nidhyananthan et al, 2018)
+	- Silence removal, pre-processing
+	- MFCC feature extraction to distinguish 50(?) speakers
+	- p1 (find some other source for this): voice recognition can be used for:
+		- converting speech
+		- prove/verify identity of speaker for security
+	- um of euclidean distance as back-end over different features:
+		- mean
+		- variance
+		- skewness
+		- kurtosis
+		- 5th & 6th order (whatever that means; smth mathy)
+
