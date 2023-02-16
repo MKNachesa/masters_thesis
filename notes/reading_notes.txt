@@ -90,3 +90,53 @@ Human Recognition using Voice Print in LabVIEW (Nidhyananthan et al, 2018)
 		- kurtosis
 		- 5th & 6th order (whatever that means; smth mathy)
 
+ECAPA-TDNN Embeddings for Speaker Diarization (Dawalatabad et al, 2021)
+	- Emphasized Channel Attention, Propagation, and Aggregation - Time Delay Neural Network
+	- Contributions
+		- ECAPA-TDNN for speaker diarisation
+		- Improve "its robustness by training[it] with on-the-fly augmentation techniques for speech contamination"
+			- Waveform dropout
+			- Frequency dropout
+			- Speed perturbation
+			- Reverberation
+			- Additive noise
+	- Data
+		- Training: VoxCeleb1, VoxCeleb2 
+		- Data augmentation: RIRs (reverberation), MUSAN (additive noise)
+		- Diarisation (testing?): Augmented Multi-party Interaction (AMI) meeting dataset
+	- AAM-softmax loss
+	- Spectral Clustering for speaker diarisation
+	- Input to model:
+		- 80-dimensional log Mel filterbank energies mean normalised per input segment
+	- Optimizer:
+		- adam with cyclical learning rate (CLR) w/ triangular policy
+	- Performance
+		- SOTA ofc
+		- the augmentation improves on standard and no augmentation
+		- Performance similar accross recording conditions
+			- Authors attribute it to augmentation (w/o verifying it)
+	- Other notes:
+		- "Modern speaker embeddings are computed from neural models trained to classify speaker identities from a large pool of speakers" (p. 1)
+		- they cite smbd for x-vectors
+		
+AUTOMATIC IDENTIFICATION OF BIRD CALLS USING SPECTRAL ENSEMBLE AVERAGE VOICE PRINTS (Tyagi et al., ?)
+	- Contributions:
+		- New technique using ensemble average computed on the FFT spectrum
+			-> Spectral Ensemble Average Voiceprint (SEAV)
+				- frame 20 ms; frame rate 10 ms
+				- N point FFT of each frame
+				- Ensemble average of FFT spectrum across all frameso
+	- Experiments:
+		- SEAV
+		- Modified version of DTW algorithm
+		- Gaussian Mixture Modeling (GMM) w/ various features:
+			- MFCC
+			- PLPCC
+			- RASTA-PLPCC
+		- SEAV + DTW classification results
+		- SEAV + DTW two-level classifier combination in 2 configs:
+			- rank level
+			- measurement level
+	- Backend:
+		- Euclidean distance
+		
