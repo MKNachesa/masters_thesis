@@ -1,0 +1,18 @@
+16.02.2023
+	- rewrote code to extract audio files
+		- tried to extract full speeches
+		- ystem says there's not enough space, so not sure what to do about that
+		- tried to fix space issues
+		- deleted irrelevant files (i.e. corrupt audio files or NaN timestamps)
+	- started looking at linking speakers with their intressent_id, it's still messy
+	- checked if embeddings are not too heavy to save (they're not)
+	- finished reading and summarised ECAPA-TDNN diarisation paper
+	- started reading and summarising birdcall VP paper
+	
+	- new to-dos as of today:
+		-
+	
+	- maybe I can instead process stuff debate by debate?
+		- i.e., get all files, get their VPs, delete the audio files?
+		- for this, I have to save in a file which debates I have already processed
+		- in theory then I could even process everything, so I later don't run into the problem of wanting files I don't have
