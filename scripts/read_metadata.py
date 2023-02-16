@@ -2,11 +2,12 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import re
 
 #---------------------------------------------------------------------
 # data paths
 thesis = os.getcwd()
-while thesis.split("\\")[-1] != "masters_thesis":
+while re.split(r"\\|/", os.getcwd())[-1] != "masters_thesis":
     os.chdir("..")
     thesis = os.getcwd()
 
@@ -268,25 +269,8 @@ df["debateurl_timestamp"] = (
 #---------------------------------------------------------------------
 # Create dataframe with only speakers who have a shortname and birthday
 
-# get rid of non-monotonically increasing speeches
-print("Getting rid of non-monotonically following speeches")
-dokids = set(df["dokid"].tolist())
-non_monotonic = set()
-for i, dokid in enumerate(dokids):
-    if (i+1) % 1000 == 0:
-        print(f"Processed {i+1} debates")
-    mini_df = df[df["dokid"] == dokid]
-    for i, row in mini_df[1:].iterrows():
-        anf = row["anforande_nummer"]
-        prev_anf = mini_df.loc[i-1]["anforande_nummer"]
-        if prev_anf > anf:
-            anf = row["dokid_anfnummer"]
-            prev_anf = mini_df.loc[i-1]["dokid_anfnummer"]
-            non_monotonic.add(prev_anf)
-            non_monotonic.add(anf)
-
-df_filt = df[df["dokid_anfnummer"].apply(lambda x: x not in non_monotonic)]
-
+# get rid of speakers with no shortname, birthyear,
+# and who spoke less than 10 years
 df_filt = df[(~df["shortname"].isna()) & (df["birthyear"] != 0)
              & (df["over_10"] == True)]
 
@@ -329,6 +313,28 @@ at_least_3 = df_filt.groupby(
 df_filt["at_least_3"] = df_filt[["shortname", "age"]].apply(
     lambda x: at_least_3[(x.shortname, x.age)] >= 3, axis=1)
 df_filt = df_filt[df_filt["at_least_3"] == True]
+
+# reset index
+df_filt = df_filt.reset_index(drop=True)
+
+# get rid of non-monotonically increasing speeches
+print("Getting rid of non-monotonically following speeches")
+dokids = set(df_filt["dokid"].tolist())
+non_monotonic = set()
+for i, dokid in enumerate(dokids):
+    if (i+1) % 1000 == 0:
+        print(f"Processed {i+1}/{len(dokids)} debates")
+    mini_df = df_filt[df_filt["dokid"] == dokid]
+    for i, row in mini_df[1:].iterrows():
+        anf = row["anforande_nummer"]
+        prev_anf = mini_df.loc[i-1]["anforande_nummer"]
+        if prev_anf > anf:
+            anf = row["dokid_anfnummer"]
+            prev_anf = mini_df.loc[i-1]["dokid_anfnummer"]
+            non_monotonic.add(prev_anf)
+            non_monotonic.add(anf)
+
+df_filt = df_filt[df_filt["dokid_anfnummer"].apply(lambda x: x not in non_monotonic)]
 
 # reset index
 df_filt = df_filt.reset_index(drop=True)
