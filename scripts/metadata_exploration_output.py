@@ -41,7 +41,7 @@ def print_df_data(df, filt=False):
     print(f"Number of debates: {num_debates}")
     print(f"Number of speeches: {num_speeches}")
 
-    num_speakers = len(set(df["shortname"]))
+    num_speakers = len(set(df["intressent_id"]))
     print(f"Number of speakers: {num_speakers}")
 
     min_age, max_age = min(df[df["age"] != 0]["age"].tolist()),\
@@ -59,12 +59,12 @@ def print_df_data(df, filt=False):
     print(f"Least debates ({min_debs}) in {min_year}")
     print(f"Most debates ({max_debs}) in {max_year}")
 
-    num_debs_per_speaker = df.groupby("shortname").agg(["count"])["dokid"]
+    num_debs_per_speaker = df.groupby("intressent_id").agg(["count"])["dokid"]
     mean_speeches = num_debs_per_speaker.mean()[0]
     std_speeches = num_debs_per_speaker.std()[0]
     print(f"Mean speeches per speaker: {mean_speeches:.0f}, std: {std_speeches:.0f}")
 
-    num_debs_per_speaker = df.groupby(["shortname", "debateyear"])\
+    num_debs_per_speaker = df.groupby(["intressent_id", "debateyear"])\
         .agg(["count"])["dokid"]
     mean_speeches = num_debs_per_speaker.mean()[0]
     std_speeches = num_debs_per_speaker.std()[0]
