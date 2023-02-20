@@ -57,6 +57,7 @@ df = pd.merge(df, df_diarise, how="left", on=["dokid", "anforande_nummer"])
 #   - finding their name w/o pre- and postfixes in the metafile
 #     and adding that in a new column ("shortname")
 #       - this will omit a few speakers but that is a chance I'm willing to take
+#   - getting their gender
 
 # lowercasing long names
 print("Preprocessing speakers")
@@ -80,6 +81,9 @@ total_num_speakers = len(set(df["intressent_id"].to_list()))
 # marking duplicate anforanden
 df["count_dokid_anfnummer"] = df.groupby(
     "dokid_anfnummer")["dokid_anfnummer"].transform("count")
+
+id_to_gender = df_meta.groupby("Id").agg(lambda x: "F" if list(x)[0] == "kvinna" else "M")["Kön"].to_dict()
+df["gender"] = df.intressent_id.apply(lambda x: id_to_gender[x] if x in id_to_gender else None)
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
@@ -224,7 +228,7 @@ df_filt = df_filt[['dokid', 'anforande_nummer', 'start', 'duration',
        'start_segment', 'end_segment', 'duration_segment', 'end',
        'start_text_time', 'end_text_time', 'duration_text', 'duration_overlap',
        'overlap_ratio', 'length_ratio', 'shortname', 'birthyear', 'age',
-       'over_15', 'debateurl_timestamp']]
+       'over_15', 'debateurl_timestamp', "gender"]]
 
 # reset index
 df_filt = df_filt.reset_index(drop=True)

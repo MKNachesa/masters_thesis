@@ -1,0 +1,4 @@
+Looking in links: https://download.pytorch.org/whl/torch_stable.html
+Requirement already satisfied: torchaudio in /home/mayanachesa/miniconda3/envs/audio/lib/python3.9/site-packages (0.12.1)
+Requirement already satisfied: torch in /home/mayanachesa/miniconda3/envs/audio/lib/python3.9/site-packages (from torchaudio) (1.12.1)
+Requirement already satisfied: typing_extensions in /home/mayanachesa/miniconda3/envs/audio/lib/python3.9/site-packages (from torch->torchaudio) (4.4.0)

@@ -59,12 +59,12 @@ if __name__ == "__main__":
     #-------------------------------
     df["filename"] = df["filename"].apply(lambda x: x.replace(".wav", ".mp3"))
 
-    for dur in [None, 60, 30, 10, 5, 3, 1]:#
+    for dur in [None]:#, 60, 30, 10, 5, 3, 1]:#
         df_groups = df.groupby("dokid")
         dur_str = dur if dur else "full"
         df_groups = df_groups[["dokid", "anforande_nummer", "filename", f"timestamps_{dur_str}", "dokid_anfnummer"]]
         df_list = [df_groups.get_group(x) for x in df_groups.groups]  # list of dfs, one for each dokid
-        pool = mp.Pool(24)
+        pool = mp.Pool(2)
 
         partial_split_audio_by_speech = partial(split_audio_by_speech,
 ##                                                speaker_model=speaker_model,
