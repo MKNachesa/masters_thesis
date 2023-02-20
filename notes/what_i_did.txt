@@ -16,3 +16,12 @@
 		- i.e., get all files, get their VPs, delete the audio files?
 		- for this, I have to save in a file which debates I have already processed
 		- in theory then I could even process everything, so I later don't run into the problem of wanting files I don't have
+		
+20.02.2023
+	- tried to extract VPs and speeches at the same time
+		- turns out that CUDA runs out of memory w/ multiprocessing
+		- low multiprocessing would literally take days to extract everything
+	- extracting only speeches that are in the bucketed data...
+	- wrote code to extract VPs from already extracted speeches, hoping it will run fast enough :S
+	- extracting VPs threw a bunch of errors for quite a few debates.
+		- I can download ONLY those debates, and extract the rest of the VPs tho?

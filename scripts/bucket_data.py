@@ -52,4 +52,4 @@ df["to_use"] = df["intressent_id"].apply(lambda x: x in ids_to_use)
 
 df_reduce = df[df.to_use==True].drop("to_use", axis=1)
 
-df_reduce.to_parquet(df_bucketed)
+df_reduce.to_parquet(df_bucketed, index=False)

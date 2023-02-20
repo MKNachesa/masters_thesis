@@ -4,4 +4,3 @@ metadata/riksdagen_speeches_filt_corrupt.parquet
 metadata/riksdagen_speeches_with_ages.parquet
 metadata/riksdagen_speeches_filt_bleu.parquet
 metadata/riksdagen_speeches_sans_intr_id.parquet
-data

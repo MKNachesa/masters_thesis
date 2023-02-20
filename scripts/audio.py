@@ -4,7 +4,7 @@ from pydub import AudioSegment
 from nltk import sent_tokenize
 import pickle as pkl
 import numpy as np
-import nemo.collections.asr as nemo_asr
+# import nemo.collections.asr as nemo_asr
 
 def split_audio_by_speech(df, vp_dir,#speaker_model=None,
                           audio_dir="data/audio", 
@@ -21,8 +21,8 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
             skips it. When False, reprocesses all files.
     """
 
-    speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(
-        model_name='titanet_large')
+    # speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(
+    #     model_name='titanet_large')
     
     segment_length = segment_length if segment_length else "full"
     filename_dokid = df["filename"].iloc[0]
@@ -38,11 +38,6 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
         start = float(segment[f"timestamps_{segment_length}"][0])  # ms
         end = float(segment[f"timestamps_{segment_length}"][1])
 
-        # if segment_length != "full":
-        #     start = np.random.uniform(start, end - (segment_length*1000))
-        #     end = start + segment_length * 1000
-        split = sound[start:end]
-
         filename = (
             Path(filename_dokid).parent / Path(filename_dokid).stem
         )  # Filename without extension.
@@ -56,26 +51,28 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
                 print(f"File {filename_speech} already exists.")
                 continue
 
+        split = sound[start:end]
+
         filenames_speeches.append(filename_speech)
         split.export(os.path.join(audio_dir, filename_speech), format="wav")
 
     df[f"filename_anforande_audio_{segment_length}"] = filenames_speeches
-    dok_to_emb = dict()
-    dokid = df.dokid.iloc[0]
+    # dok_to_emb = dict()
+    # dokid = df.dokid.iloc[0]
 
-    for i, row in df.iterrows():
-        f = row[f"filename_anforande_audio_{segment_length}"]
-        dok = row.dokid_anfnummer
-        file_path = os.path.join(audio_dir, f)
-        emb = speaker_model.get_embedding(file_path)
-        dok_to_emb[dok] = emb
-        os.remove(file_path)
-    dur_dir = os.path.join(vp_dir, f"{segment_length}")
-    if f"{segment_length}" not in next(os.walk(vp_dir))[1]:
-        os.mkdir(dur_dir)
-    f = open(os.path.join(dur_dir, f"emb_{dokid}.pkl"), "wb")
-    pkl.dump(dok_to_emb, f)
-    f.close()
+    # for i, row in df.iterrows():
+    #     f = row[f"filename_anforande_audio_{segment_length}"]
+    #     dok = row.dokid_anfnummer
+    #     file_path = os.path.join(audio_dir, f)
+    #     emb = speaker_model.get_embedding(file_path)
+    #     dok_to_emb[dok] = emb
+    #     os.remove(file_path)
+    # dur_dir = os.path.join(vp_dir, f"{segment_length}")
+    # if f"{segment_length}" not in next(os.walk(vp_dir))[1]:
+    #     os.mkdir(dur_dir)
+    # f = open(os.path.join(dur_dir, f"emb_{dokid}.pkl"), "wb")
+    # pkl.dump(dok_to_emb, f)
+    # f.close()
 
     print(f"{filename_speech.parent} complete", end="\r", flush=True)
     return df

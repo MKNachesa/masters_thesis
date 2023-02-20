@@ -8,8 +8,7 @@ import pandas as pd
 import os
 from functools import partial
 import pickle as pkl
-import numpy as np
-import nemo.collections.asr as nemo_asr
+# import nemo.collections.asr as nemo_asr
 
 ##--------------------------------------------#
 #| Make sure to import and download all       |
@@ -29,8 +28,9 @@ if __name__ == "__main__":
     thesis_dir = os.getcwd()
     os.chdir("scripts")
     vp_dir = os.path.join(thesis_dir, "data")
-    speeches_file = os.path.join(thesis_dir, "metadata/filtered_speeches_ts.parquet")
-    processed_debates_file = os.path.join(thesis_dir, "metadata/processed_debates.pkl")
+    speeches_file = os.path.join(thesis_dir, "metadata/bucketed_speeches.parquet")
+    # peeches_file = os.path.join(thesis_dir, "metadata/filtered_speeches_ts.parquet")
+    # processed_debates_file = os.path.join(thesis_dir, "metadata/processed_debates.pkl")
 
     os.chdir("../../riksdagen_anforanden")
 
@@ -53,10 +53,15 @@ if __name__ == "__main__":
 
     # REMOVE ME TO RUN ON EVERYTHING
     #-------------------------------
-    dokid_to_process = ['GR01LU22', 'GR01UU12', 'GR10476', 'GR10508', 'GR10529', 
-                        'GR10530', 'GR10523', 'GR10533', 'GR01TU10', 'GR10197']
-    df = df[:19]
+    # dokid_to_process = ['GR01LU22', 'GR01UU12', 'GR10476', 'GR10508', 'GR10529', 
+    #                     'GR10530', 'GR10523', 'GR10533', 'GR01TU10', 'GR10197']
+    # df = df[:19]
     #-------------------------------
+    
+    # it won't process files in dokid GZ01FiU1 and GT01UbU1
+    # dokid_to_process = {}
+    # df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
+
     df["filename"] = df["filename"].apply(lambda x: x.replace(".wav", ".mp3"))
 
     for dur in [None]:#, 60, 30, 10, 5, 3, 1]:#
@@ -64,7 +69,7 @@ if __name__ == "__main__":
         dur_str = dur if dur else "full"
         df_groups = df_groups[["dokid", "anforande_nummer", "filename", f"timestamps_{dur_str}", "dokid_anfnummer"]]
         df_list = [df_groups.get_group(x) for x in df_groups.groups]  # list of dfs, one for each dokid
-        pool = mp.Pool(2)
+        pool = mp.Pool(24)
 
         partial_split_audio_by_speech = partial(split_audio_by_speech,
 ##                                                speaker_model=speaker_model,
