@@ -7,7 +7,9 @@ Faton:
 	- step 4 says an audio file is already downloaded for most of the files
 	
 Rafal:
-	- 
+	- Should I try to prioritise for the within-speaker pairs to be from different debates?
+	- balance by gender
+	- upload a new file with only relevant speakers and debates
 	
 Sara:
 	- 

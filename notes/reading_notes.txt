@@ -139,4 +139,7 @@ AUTOMATIC IDENTIFICATION OF BIRD CALLS USING SPECTRAL ENSEMBLE AVERAGE VOICE PRI
 			- measurement level
 	- Backend:
 		- Euclidean distance
-		
+	- Results:
+		- SEAV 2nd best
+		- GMM with MFCC best
+		- SEAV less computationally expensive tho
