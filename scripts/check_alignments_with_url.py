@@ -56,7 +56,7 @@ else:
 #---------------------------------------------------------------------
 # opening dataframes
 print("Opening dataframes\n")
-df_filt = pd.read_parquet(filtered_path)
+##df_filt = pd.read_parquet(filtered_path)
 df_downsize = pd.read_parquet(downsize_path)
 #---------------------------------------------------------------------
 

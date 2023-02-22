@@ -25,3 +25,4 @@
 	- wrote code to extract VPs from already extracted speeches, hoping it will run fast enough :S
 	- extracting VPs threw a bunch of errors for quite a few debates.
 		- I can download ONLY those debates, and extract the rest of the VPs tho?
+	- next time log in: clear old audio files
