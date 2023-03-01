@@ -23,7 +23,7 @@ df = pd.read_parquet(bucket_file)
 speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(model_name='titanet_large')
 
 # for dur in [None]:#, 60, 30, 10, 5, 3, 1]:#
-for dur in [30]:#10, 5, 3, 1    #None, 60, , 
+for dur in [30, 10, 5, 3, 1]:    #None, 60, , 
     dur_str = dur if dur else "full"
     df[f"filename_anforande_audio_{dur_str}"] = df[["filename", f"timestamps_{dur_str}"]].apply(
         lambda x: os.path.join(audio_dir, f"{x.filename.strip('.wav')}_{x[f'timestamps_{dur_str}'][0]}_{x[f'timestamps_{dur_str}'][1]}.wav"), axis=1)
