@@ -15,6 +15,7 @@
 	- if yes, should this follow a linear or other scale?
 - selecting speakers
 	- speakers per bucket dropping
+	- balance for speeches to be from different debates
 - selecting pairs
 	- take embedding from the middle of age range
 	- but also compare edge-cases (so does vp at 19 compare to vp at 29?)

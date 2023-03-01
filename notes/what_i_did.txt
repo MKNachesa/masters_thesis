@@ -26,3 +26,10 @@
 	- extracting VPs threw a bunch of errors for quite a few debates.
 		- I can download ONLY those debates, and extract the rest of the VPs tho?
 	- next time log in: clear old audio files
+	
+27.02.2023
+	- extracted speeches from two debates that were too big
+		- manually cut up audio files, changed to wav
+		- uploaded to drive/colab
+			- extracted for all speech lengths
+	

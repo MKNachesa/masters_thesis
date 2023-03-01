@@ -53,14 +53,10 @@ if __name__ == "__main__":
 
     # REMOVE ME TO RUN ON EVERYTHING
     #-------------------------------
-    # dokid_to_process = ['GR01LU22', 'GR01UU12', 'GR10476', 'GR10508', 'GR10529', 
-    #                     'GR10530', 'GR10523', 'GR10533', 'GR01TU10', 'GR10197']
+    dokid_to_process = ['GZ01FiU1', 'GT01UbU1']
+    df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
     # df = df[:19]
     #-------------------------------
-    
-    # it won't process files in dokid GZ01FiU1 and GT01UbU1
-    # dokid_to_process = {}
-    # df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
 
     df["filename"] = df["filename"].apply(lambda x: x.replace(".wav", ".mp3"))
 

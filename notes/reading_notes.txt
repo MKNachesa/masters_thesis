@@ -143,3 +143,27 @@ AUTOMATIC IDENTIFICATION OF BIRD CALLS USING SPECTRAL ENSEMBLE AVERAGE VOICE PRI
 		- SEAV 2nd best
 		- GMM with MFCC best
 		- SEAV less computationally expensive tho
+		
+Voice Biometrics: Deep Learning-based Voiceprint Authentication System (Boles & Rad, 2017)
+	- They mention text-dependent vs text-independent voice identification (VI)
+		- text-independent more powerful and secure
+		- but they use "text-dependent" in a different way than I would expect
+		- text-dependent VI can be more secure if it is a combination of text-independent VI and ASR (cuz then you can verify on any text)
+	- Contributions:
+		- MFCC and SVM neural network for speaker verification and identification
+		- fitting "unique audio data" on neural network
+	- Data:
+		- LibriSpeech. First 10 speakers, then 40
+		- recordings from *two* speakers
+			- Born in America and India
+			- English
+			- whispered English
+			- Indian
+	- Experiments
+		- Tested various number of MFCCs, ended on 18
+		- First trained network on 10 speakers to decide how many coefficients and how long clips for MFCC should be
+		- Changed network after deciding the number of speakers...
+		- 20 MFCCs when training on the two-speaker dataset
+	- Not sure what the point of this paper is
+		- I guess it's from quite a long time ago
+		- Maybe the number of MFCCs and the length of audio clips is significant?
