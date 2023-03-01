@@ -24,39 +24,41 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
     # speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(
     #     model_name='titanet_large')
     
-    segment_length = segment_length if segment_length else "full"
     filename_dokid = df["filename"].iloc[0]
-    segments = df[[f"timestamps_{segment_length}"]].to_dict(orient="records")
+
     sound = AudioSegment.from_mp3(os.path.join(audio_dir, filename_dokid))
     sound = sound.set_frame_rate(16000)
     sound = sound.set_channels(1)
 
-    filenames_speeches = []
+    for segment_length in [5, 3, 1]:
+        segment_length = segment_length if segment_length else "full"
+        segments = df[[f"timestamps_{segment_length}"]].to_dict(orient="records")
 
-    for segment in segments:
-        # cut off 10 secs from start and end
-        start = float(segment[f"timestamps_{segment_length}"][0])  # ms
-        end = float(segment[f"timestamps_{segment_length}"][1])
+        filenames_speeches = []
 
-        filename = (
-            Path(filename_dokid).parent / Path(filename_dokid).stem
-        )  # Filename without extension.
+        for segment in segments:
+            start = float(segment[f"timestamps_{segment_length}"][0])  # ms
+            end = float(segment[f"timestamps_{segment_length}"][1])
 
-        filename_speech = Path(
-            f"{filename}_{start}_{end}.wav"
-        )
+            filename = (
+                Path(filename_dokid).parent / Path(filename_dokid).stem
+            )  # Filename without extension.
 
-        if file_exists_check:
-            if os.path.exists(os.path.join(audio_dir, filename_speech)):
-                print(f"File {filename_speech} already exists.")
-                continue
+            filename_speech = Path(
+                f"{filename}_{start}_{end}.wav"
+            )
 
-        split = sound[start:end]
+            filenames_speeches.append(filename_speech)
 
-        filenames_speeches.append(filename_speech)
-        split.export(os.path.join(audio_dir, filename_speech), format="wav")
+            if file_exists_check:
+                if os.path.exists(os.path.join(audio_dir, filename_speech)):
+                    print(f"File {filename_speech} already exists.")
+                    continue
 
-    df[f"filename_anforande_audio_{segment_length}"] = filenames_speeches
+            split = sound[start:end]
+            split.export(os.path.join(audio_dir, filename_speech), format="wav")
+
+        df[f"filename_anforande_audio_{segment_length}"] = filenames_speeches
     # dok_to_emb = dict()
     # dokid = df.dokid.iloc[0]
 
