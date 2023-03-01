@@ -9,6 +9,9 @@ Rafal:
 	- first compare within age-range and w/ different speakers
 	- soft-clustering
 	- use chat-gpt for brainstorming
+	- tsne with bucketed, set perplexity/number-of-neightbours
+	- take politicians A & B, are they more similar within an age vs at different ages?
+		- speakers within age ranges vs speakers across age ranges
 	
 Faton:
 	- 

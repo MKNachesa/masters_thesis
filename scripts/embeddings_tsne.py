@@ -14,8 +14,10 @@ dokids_to_process = {'GZ01CU14', 'GZ01CU18', 'GZ01CU27', 'GZ01NU24', 'GZ01NU3', 
                      'H701TU7', 'H801TU16', 'H901TU1', 'H901UU15'}
 
 df = pd.DataFrame(columns=["dokid_anfnummer", "emb"])
-for dokid in dokids_to_process:
-    with open(f"emb_{dokid}.pkl", "rb") as infile:
+##for dokid in dokids_to_process:
+for dokid in os.listdir():
+##    with open(f"emb_{dokid}.pkl", "rb") as infile:
+    with open(dokid, "rb") as infile:
         f = pkl.load(infile)
     tmp_df = pd.DataFrame(f.items(), columns=["dokid_anfnummer", "emb"])
     df = pd.concat([df, tmp_df])
@@ -32,6 +34,10 @@ df_mg = pd.merge(df, df_buck, how="left", on=["dokid_anfnummer"])
 df_mg = df_mg.drop("in_df", axis=1)
 df_mg["emb"] = df_mg["emb"].apply(lambda x: np.array(x[0]))
 
+# where do the extra rows come from?
+# df_buck has fewer rows than df? euhh
+df_mg = df_mg[~df_mg.intressent_id.isna()]
+
 tsne = TSNE(n_components=2, verbose=1, random_state=123)
 z = tsne.fit_transform(np.array(df_mg.emb.tolist()))
 df_mg["comp-1"] = z[:,0]
@@ -46,8 +52,8 @@ df_mg["num"] = df_mg.intressent_id.apply(lambda x: id_to_num[x])
 df_mg["num_name"] = df_mg[["num", "shortname"]].apply(
     lambda x: f"{x.num}_{x.shortname}", axis=1)
         
-ax = sns.scatterplot(x="comp-1", y="comp-2", hue=df_mg.num_name.tolist(),
-                palette=sns.color_palette("hls", 19),
+sns.scatterplot(x="comp-1", y="comp-2", hue=df_mg.num_name.tolist(),
+                palette=sns.color_palette("hls", 32),
                 data=df_mg).set(title="Separating two embs with T-SNE")
         
 ##sns.move_legend(ax, "center right")
