@@ -11,12 +11,8 @@ import pickle as pkl
 # import nemo.collections.asr as nemo_asr
 
 ##--------------------------------------------#
-#| Make sure to import and download all       |
-#| necessary modules!                         |
-#|                                            |
-#| Check all comments first!                  |
-#|                                            |
-#| This script only runs on a subset of files |
+# first run cant_open_debate.py!
+# use the output to ignore large files, process those manually
 ##--------------------------------------------#
 
 ##speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(
@@ -28,13 +24,12 @@ if __name__ == "__main__":
     thesis_dir = os.getcwd()
     os.chdir("scripts")
     vp_dir = os.path.join(thesis_dir, "data")
-    speeches_file = os.path.join(thesis_dir, "metadata/bucketed_speeches.parquet")
+    # speeches_file = os.path.join(thesis_dir, "metadata/bucketed_speeches.parquet")
+    speeches_file = os.path.join(thesis_dir, "metadata/all_speeches_ts_downsize.parquet")
     # peeches_file = os.path.join(thesis_dir, "metadata/filtered_speeches_ts.parquet")
     # processed_debates_file = os.path.join(thesis_dir, "metadata/processed_debates.pkl")
 
-    os.chdir("../../riksdagen_anforanden")
-
-    riksdag_dir = os.getcwd()
+    riksdag_dir = "/data/datasets/riksdagen_anforanden"
     audio_dir = os.path.join(riksdag_dir, "data/audio")
 
     os.chdir(scripts_dir)
@@ -46,6 +41,7 @@ if __name__ == "__main__":
     from src.audio import split_audio_by_speech
 
     df = pd.read_parquet(speeches_file)
+    df = df.drop_duplicates("dokid_anfnummer").reset_index(drop=True)
     # processed_debates = pkl.load(
     #     open(processed_debates_file, "rb"))
     # all_dokids = set(df.dokid.tolist())
@@ -53,8 +49,8 @@ if __name__ == "__main__":
 
     # REMOVE ME TO RUN ON EVERYTHING
     #-------------------------------
-    dokid_to_ignore = ['GZ01FiU1', 'GT01UbU1']  # big files, python can handle them
-    df = df[df.dokid.apply(lambda x: x not in dokid_to_ignore)]
+    # dokid_to_ignore = ['GZ01FiU1', 'GT01UbU1']  # big files, python can handle them
+    # df = df[df.dokid.apply(lambda x: x not in dokid_to_ignore)]
     # df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
     # df = df[:19]
     #-------------------------------
@@ -66,7 +62,9 @@ if __name__ == "__main__":
     dur = 5
     df_groups = df.groupby("dokid")
     dur_str = dur if dur else "full"
-    df_groups = df_groups[["dokid", "anforande_nummer", "filename", f"timestamps_5", f"timestamps_3", f"timestamps_1", "dokid_anfnummer"]]
+    df_groups = df_groups[["dokid", "anforande_nummer", "filename", 
+                           "timestamps_full", "timestamps_60", "timestamps_30", "timestamps_10", 
+                           "timestamps_5", "timestamps_3", "timestamps_1", "dokid_anfnummer"]]
     df_list = [df_groups.get_group(x) for x in df_groups.groups]  # list of dfs, one for each dokid
     pool = mp.Pool(24)
 

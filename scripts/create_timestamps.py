@@ -4,7 +4,9 @@ from functools import partial
 
 np.random.seed(1)
 
-df = pd.read_parquet("../metadata/filtered_speeches.parquet")
+df_full = pd.read_parquet("../metadata/riksdagen_speeches_with_ages.parquet")
+df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet")
+df_full = df_full[~df_full.start_segment.isna()].reset_index(drop=True)
 
 def get_ts(start_end, dur):
   start, end = start_end
@@ -19,8 +21,19 @@ for dur in [None, 60, 30, 10, 5, 3, 1]:
   partial_get_ts = partial(get_ts, dur=dur)
   if not dur:
     dur = "full"
-  df[f"timestamps_{dur}"] = df[["start_segment", "end_segment"]].apply(
+  df_full[f"timestamps_{dur}"] = df_full[["start_segment", "end_segment"]].apply(
       partial_get_ts, axis=1
   )
 
-df.to_parquet("../metadata/filtered_speeches_ts.parquet", index=False)
+df_full = df_full.set_index("dokid_anfnummer")
+df_ts = df_ts.set_index("dokid_anfnummer")
+df_full.update(df_ts)
+df_full.reset_index(inplace=True)
+
+df_full.to_parquet("../metadata/all_speeches_ts.parquet", index=False)
+cols_to_keep = ["dokid_anfnummer"]
+for dur in ["full", 60, 30, 10, 5, 3, 1]:
+  cols_to_keep.append(f"timestamps_{dur}")
+
+df_downsize = df_full[cols_to_keep].reset_index(drop=True)
+df_downsize.to_parquet("../metadata/all_speeches_ts_downsize.parquet", index=False)

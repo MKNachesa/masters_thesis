@@ -30,8 +30,8 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
     sound = sound.set_frame_rate(16000)
     sound = sound.set_channels(1)
 
-    for segment_length in [5, 3, 1]:
-        segment_length = segment_length if segment_length else "full"
+    for segment_length in ["full", 60, 30, 10, 5, 3, 1]:
+        # segment_length = segment_length if segment_length else "full"
         segments = df[[f"timestamps_{segment_length}"]].to_dict(orient="records")
 
         filenames_speeches = []
