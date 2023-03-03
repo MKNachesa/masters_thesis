@@ -13,7 +13,10 @@ data_dir = os.getcwd()
 path_bucket = os.path.join(metadata_dir, "bucketed_speeches.parquet")
 
 dfs = dict()
-for direc in next(os.walk(data_dir))[1]:
+
+direcs = ["1", "3", "5", "10", "30", "60", "full"]
+for direc in direcs:
+    print(f"Processing {direc}")
     os.chdir(direc)
 
     ##dokids_to_process = {'GZ01CU14', 'GZ01CU18', 'GZ01CU27', 'GZ01NU24', 'GZ01NU3', 'H001AU11', 
@@ -24,8 +27,8 @@ for direc in next(os.walk(data_dir))[1]:
     df = pd.DataFrame(columns=["dokid_anfnummer", "emb"])
     ##for dokid in dokids_to_process:
     for dokid in os.listdir():
-        if dokid == 'emb_GT01UbU1.pkl' or dokid == 'emb_GZ01FiU1.pkl':
-            continue
+##        if dokid == 'emb_GT01UbU1.pkl' or dokid == 'emb_GZ01FiU1.pkl':
+##            continue
     ##    with open(f"emb_{dokid}.pkl", "rb") as infile:
         with open(dokid, "rb") as infile:
             f = pkl.load(infile)
@@ -64,11 +67,13 @@ for direc in next(os.walk(data_dir))[1]:
 
     dfs[direc] = df_mg
     os.chdir("..")
+    print()
         
-##sns.scatterplot(x="comp-1", y="comp-2", hue=df_mg.num_name.tolist(),
-##                palette=sns.color_palette("hls", 32),
-##                data=df_mg).set(title="Separating two embs with T-SNE")
+sns.scatterplot(x="comp-1", y="comp-2", hue=df_mg.num_name.tolist(),
+                palette=sns.color_palette("hls", 32),
+                data=df_mg).set(title="Separating two embs with T-SNE")
         
 ##sns.move_legend(ax, "center right")
 ##plt.show()
+##fig.savefig('samplefigure', bbox_inches='tight')
         
