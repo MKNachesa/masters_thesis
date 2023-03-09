@@ -10,4 +10,4 @@ Rafal:
 	- 
 	
 Sara:
-	- 
+	- do I have enough data?
