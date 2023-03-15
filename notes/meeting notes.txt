@@ -20,3 +20,6 @@ Sara:
 	- motivation, how related to other fields n stuff, position yourself, RQs, what am I doing, main results
 	- background = Related Work, *not* mine
 	- motivation for why processing was done in a certain way
+	- gender and across age comparisons for different speakers
+	- compute threshold for a subset of speakers
+	- compute threshold from bigger group based on at least 3 speeches per year, separate from current group
