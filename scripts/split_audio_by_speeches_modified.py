@@ -8,6 +8,8 @@ import pandas as pd
 import os
 from functools import partial
 import pickle as pkl
+import datetime
+import time
 # import nemo.collections.asr as nemo_asr
 
 ##--------------------------------------------#
@@ -17,6 +19,10 @@ import pickle as pkl
 
 ##speaker_model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained(
 ##    model_name='titanet_large')
+
+def to_timestamp(millitime):
+    return str(datetime.timedelta(seconds=datetime.timedelta(milliseconds=millitime).seconds))
+
 
 if __name__ == "__main__":
     scripts_dir = os.getcwd()
@@ -34,7 +40,8 @@ if __name__ == "__main__":
 
     os.chdir(scripts_dir)
 
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    # sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent)+"/riksdagen_anforanden")
 
     from tqdm import tqdm
 
@@ -53,33 +60,47 @@ if __name__ == "__main__":
     # df = df[df.dokid.apply(lambda x: x not in dokid_to_ignore)]
     # df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
     # df = df[:19]
+
+    # df = df[df.dokid=="GZ01FiU1"]
+    # df = df[df.dokid=="GT01UbU1"]
     #-------------------------------
 
     df["filename"] = df["filename"].apply(lambda x: x.replace(".wav", ".mp3"))
 
+    durations = [1, 3, 5, 10, 30, 60, "full"]
+
+    for dur in durations:
+        df[f"split_timestamps_{dur}"] = df[f"timestamps_{dur}"].apply(lambda x: [to_timestamp(x[0]), to_timestamp(x[1])])
+
     # for dur in [None]:#, 60, 30, 10, 5, 3, 1]:#
     # for dur in [10]:    #, 5, 3, 1]:# None, 60, 30, 
-    dur = 5
+    # dur = 5
     df_groups = df.groupby("dokid")
-    dur_str = dur if dur else "full"
-    df_groups = df_groups[["dokid", "anforande_nummer", "filename", 
-                           "timestamps_full", "timestamps_60", "timestamps_30", "timestamps_10", 
-                           "timestamps_5", "timestamps_3", "timestamps_1", "dokid_anfnummer"]]
+    # dur_str = dur if dur else "full"
+    df_groups = df_groups[["dokid", "anforande_nummer", "filename", "dokid_anfnummer"]
+                          + [f"timestamps_{dur}" for dur in durations]
+                          + [f"split_timestamps_{dur}" for dur in durations]]
     df_list = [df_groups.get_group(x) for x in df_groups.groups]  # list of dfs, one for each dokid
     pool = mp.Pool(24)
+
+    start = time.time()
 
     partial_split_audio_by_speech = partial(split_audio_by_speech,
 ##                                                speaker_model=speaker_model,
                                             vp_dir=vp_dir,
-                                            segment_length=dur,
+                                            # segment_length=dur,
                                             audio_dir=audio_dir)
 
     df_dokids = pd.concat(pool.map(partial_split_audio_by_speech, tqdm(df_list, total=len(df_list)), chunksize=4), axis=0)
     pool.close()
 
-    df[f"filename_anforande_audio_{dur_str}"] = df_dokids[f"filename_anforande_audio_{dur_str}"]
+    end = time.time()
 
-    print(df[[f"filename_anforande_audio_{dur_str}", "dokid", "shortname"]])
+    print(f"Processing {len(df)} speeches took {to_timestamp((end-start)*1000)}")
+
+    # df[f"filename_anforande_audio_{dur_str}"] = df_dokids[f"filename_anforande_audio_{dur_str}"]
+
+    # print(df[[f"filename_anforande_audio_{dur_str}", "dokid", "shortname"]])
 
         # not really needed as timestamps already saved
         # df.to_parquet(speeches_file, index=False)

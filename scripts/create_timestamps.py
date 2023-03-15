@@ -31,7 +31,7 @@ df_full.update(df_ts)
 df_full.reset_index(inplace=True)
 
 df_full.to_parquet("../metadata/all_speeches_ts.parquet", index=False)
-cols_to_keep = ["dokid_anfnummer"]
+cols_to_keep = ["dokid_anfnummer", "dokid", "anforande_nummer", "filename"]
 for dur in ["full", 60, 30, 10, 5, 3, 1]:
   cols_to_keep.append(f"timestamps_{dur}")
 

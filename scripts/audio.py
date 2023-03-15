@@ -4,6 +4,7 @@ from pydub import AudioSegment
 from nltk import sent_tokenize
 import pickle as pkl
 import numpy as np
+import subprocess
 # import nemo.collections.asr as nemo_asr
 
 def split_audio_by_speech(df, vp_dir,#speaker_model=None,
@@ -25,14 +26,21 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
     #     model_name='titanet_large')
     
     filename_dokid = df["filename"].iloc[0]
+    filename = (
+        Path(filename_dokid).parent / Path(filename_dokid).stem
+    )  # Filename without extension.
+    input_file = os.path.join(audio_dir, filename_dokid)
 
-    sound = AudioSegment.from_mp3(os.path.join(audio_dir, filename_dokid))
-    sound = sound.set_frame_rate(16000)
-    sound = sound.set_channels(1)
+    try:
+        sound = AudioSegment.from_mp3(os.path.join(audio_dir, filename_dokid))
+        sound = sound.set_frame_rate(16000)
+        sound = sound.set_channels(1)
+    except:
+        return df
 
     for segment_length in ["full", 60, 30, 10, 5, 3, 1]:
         # segment_length = segment_length if segment_length else "full"
-        segments = df[[f"timestamps_{segment_length}"]].to_dict(orient="records")
+        segments = df[[f"timestamps_{segment_length}", f"split_timestamps_{segment_length}"]].to_dict(orient="records")
 
         filenames_speeches = []
 
@@ -40,15 +48,15 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
             start = float(segment[f"timestamps_{segment_length}"][0])  # ms
             end = float(segment[f"timestamps_{segment_length}"][1])
 
-            filename = (
-                Path(filename_dokid).parent / Path(filename_dokid).stem
-            )  # Filename without extension.
+            timestamp_start, timestamp_end = segment[f"split_timestamps_{segment_length}"]
 
             filename_speech = Path(
                 f"{filename}_{start}_{end}.wav"
             )
 
             filenames_speeches.append(filename_speech)
+
+            output_file = os.path.join(audio_dir, filename_speech)
 
             if file_exists_check:
                 if os.path.exists(os.path.join(audio_dir, filename_speech)):
@@ -57,6 +65,10 @@ def split_audio_by_speech(df, vp_dir,#speaker_model=None,
 
             split = sound[start:end]
             split.export(os.path.join(audio_dir, filename_speech), format="wav")
+            # retcode = subprocess.call(["ffmpeg", "-i", input_file, "-ac", "1", "-ss", timestamp_start, "-to", timestamp_end, "-c", "copy", output_file],
+            #           stdout=subprocess.DEVNULL,
+            #           stderr=subprocess.STDOUT
+            # )
 
         df[f"filename_anforande_audio_{segment_length}"] = filenames_speeches
     # dok_to_emb = dict()
