@@ -10,6 +10,7 @@ from functools import partial
 import pickle as pkl
 import datetime
 import time
+import datetime
 # import nemo.collections.asr as nemo_asr
 
 ##--------------------------------------------#
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     # df = df[df.dokid.apply(lambda x: x in dokid_to_process)].reset_index()
     # df = df[:19]
 
-    # df = df[df.dokid=="GZ01FiU1"]
+    # df = df[(df.dokid=="GZ01FiU1") | (df.dokid=="GT01UbU1")]
     # df = df[df.dokid=="GT01UbU1"]
     #-------------------------------
 

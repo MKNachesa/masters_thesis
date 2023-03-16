@@ -7,6 +7,10 @@ np.random.seed(1)
 df_full = pd.read_parquet("../metadata/riksdagen_speeches_with_ages.parquet")
 df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet")
 df_full = df_full[~df_full.start_segment.isna()].reset_index(drop=True)
+df_full = df_full.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)
+df_ts = df_ts.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)
+df_full = df_full[df_full.duration_segment >= 80].reset_index(drop=True)
+
 
 def get_ts(start_end, dur):
   start, end = start_end
