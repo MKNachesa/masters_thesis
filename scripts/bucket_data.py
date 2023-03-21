@@ -45,7 +45,7 @@ def quality_filter(df):
     non_monotonic = set()
     for i, dokid in enumerate(dokids):
         if (i+1) % 1000 == 0:
-            print(f"Processed {i+1}/{len(dokids)} debates")
+            print(f"Processed {i+1}/{len(dokids)} debates", flush=True)
         mini_df = df_filt[df_filt["dokid"] == dokid]
         for i, row in mini_df[1:].iterrows():
             anf = row["anforande_nummer"]
@@ -150,6 +150,21 @@ def get_train_df(df, df_buck_reduce):
     return df_train
 
 
+def get_train_dev_ids(buckets, train_prop):
+    train_ids = set()
+    dev_ids = set()
+
+    for bucket in buckets:
+        for gender in "FM":
+            if len(bucket[gender]) < 4:
+                train_ids.update(bucket[gender])
+            else:
+                split = int(len(bucket[gender])*train_prop)
+                train_ids.update(list(bucket[gender])[:split])
+                dev_ids.update(list(bucket[gender])[:split])
+    return train_ids, dev_ids
+
+# set up file paths ------------------------------------------------
 os.chdir("..")
 metadata = os.path.join(os.getcwd(), "metadata")
 path_ts = os.path.join(metadata, "all_speeches_ts_downsize.parquet")
@@ -159,6 +174,7 @@ path_train_bucketed = os.path.join(metadata, "bucketed_training_speeches.parquet
 path_dev_bucketed = os.path.join(metadata, "bucketed_dev_speeches.parquet")
 os.chdir("scripts")
 
+# open and merge dfs, filter for quality ---------------------------
 df_ts = pd.read_parquet(path_ts)
 df_all = pd.read_parquet(path_all)
 
@@ -166,6 +182,8 @@ cols = [col for col in df_all.columns if col not in df_ts.columns] + ["dokid_anf
 
 df = pd.merge(df_ts, df_all[cols], how="left", on=["dokid_anfnummer"])
 df = quality_filter(df)
+
+# create test data -------------------------------------------------
 df_buck = get_test_df(df)
 
 buckets = select_ids(df_buck, 4)
@@ -179,26 +197,10 @@ df_train = get_train_df(df, df_buck_reduce)
 
 buckets = select_ids(df_train, 20)
 
-def split_train_dev(buckets, train_prop):
-
-train_ids = set()
-dev_ids = set()
-
-train_prop = 0.8
-
-for bucket in buckets:
-    for gender in "FM":
-        if len(bucket[gender]) < 4:
-            train_ids.update(bucket[gender])
-        else:
-            split = int(len(bucket[gender])*train_prop)
-            train_ids.update(list(bucket[gender])[:split])
-            dev_ids.update(list(bucket[gender])[:split])
+train_ids, dev_ids = get_train_dev_ids(buckets, 0.8)
 
 df_train_reduce = df_train[df_train["intressent_id"].apply(lambda x: x in train_ids)].reset_index(drop=True)
-df_dev_reduce = df_train[df_train["intressent_id"].apply(lambda x: x in dev_ids)].reset_index(drop=True)
-
 df_train_reduce.to_parquet(path_train_bucketed, index=False)
-df_dev_reduce.to_parquet(path_dev_bucketed, index=False)
 
-# NOT FINISHED
+df_dev_reduce = df_train[df_train["intressent_id"].apply(lambda x: x in dev_ids)].reset_index(drop=True)
+df_dev_reduce.to_parquet(path_dev_bucketed, index=False)

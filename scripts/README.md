@@ -20,7 +20,8 @@ Modifies *all_speeches_ts_downsize.parquet*
 **bucket_data.py**
 Does quality filtering of the speeches and splits them into two portions: speakers who spoke 10+ years and those who didn't.
 Creates buckets for age ranges, and (tries) to fill them up with 4 speakers (2 men 2 women) per bucket.
-(TO-DO: extracts speakers to use for remaining speakers)
+Same as above for train+dev data, but with 20 speakers per bucket
+Splits train+dev data according to an 80:20 split, but if number of speakers in an age bucket <= 4, then 100:0 split
 
 **pipeline_demo.py**
 Creates speeches pairs for bucketed speakers in 3 settings:
