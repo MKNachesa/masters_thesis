@@ -49,15 +49,16 @@ def get_cossim_df(num_pairs, parquet_path, save_path):
         #
     if GENERATE_GRAPHS:
         for speech_length in speech_lengths:
-            plt.hist(df[f"score_mean_{speech_length}"].tolist())
+            plt.hist(list(reduce(lambda x, y: x + y, [df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])))
             plt.title(f'{(" ").join(save_path.split("_"))} cosine similarity scores for {speech_length} speech length')
             plt.savefig(os.path.join(results_dir, f"{save_path}_{speech_length}_cossim_score.png"))
             plt.close()
         #
-        lesbian_flag = [(213, 45, 0), (239, 118, 39), (255, 154, 86), (230, 230, 230), (209, 98, 164), (181, 86, 144), (163, 2, 98)]
+        # lesbian_flag = [(213, 45, 0), (239, 118, 39), (255, 154, 86), (230, 230, 230), (209, 98, 164), (181, 86, 144), (163, 2, 98)]
         for i, speech_length in enumerate(speech_lengths):
-            plt.hist(df[f"score_mean_{speech_length}"].tolist(), label=f"{speech_length}",
-            bins=np.arange(0, 1, 0.02), color=tuple(map(lambda x: x/255, lesbian_flag[i]))),
+            plt.hist(list(reduce(lambda x, y: x + y, [df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
+            label=f"{speech_length}",
+            bins=np.arange(-0.2, 1, 0.02))#, color=tuple(map(lambda x: x/255, lesbian_flag[i]))),
         plt.title(f'{(" ").join(save_path.split("_"))} cosine similarity scores')
         plt.legend()
         plt.savefig(os.path.join(results_dir, f"{save_path}_all_cossim_score.png"))
@@ -281,7 +282,7 @@ def per_bucket_accuracy(df_within, df_across, thresholds, num_pairs=3, bucket_si
 
 speech_lengths = ["full", 60, 30, 10, 5, 3, 1]
 NUM_PAIRS = 3
-GENERATE_GRAPHS = False
+GENERATE_GRAPHS = True
 
 across_age_df = get_cossim_df(num_pairs=3,
                               parquet_path="within_speaker_across_age_comparisons.parquet",
@@ -297,7 +298,7 @@ across_speaker_df = get_cossim_df(num_pairs=1,
 
 if GENERATE_GRAPHS:
     for speech_length in speech_lengths:
-        plt.hist(list(reduce(lambda x, y: x + y, [across_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS)])),
+        plt.hist(list(reduce(lambda x, y: x + y, [across_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
                 label="within speakers across ages")
         plt.hist(across_speaker_df[f"score_1_{speech_length}"].tolist(),
                 label="across speakers")
@@ -307,7 +308,7 @@ if GENERATE_GRAPHS:
         plt.close()
 #
     for speech_length in speech_lengths:
-        plt.hist(list(reduce(lambda x, y: x + y, [within_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS)])),
+        plt.hist(list(reduce(lambda x, y: x + y, [within_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
                 label="within speakers within ages")
         plt.hist(across_speaker_df[f"score_1_{speech_length}"].tolist(),
                 label="across speakers")
@@ -321,8 +322,8 @@ thresh_scores = vary_threshold_graph(within_age_df, across_speaker_df, 3)
 add_threshold_accs_to_df(within_age_df, across_age_df, across_speaker_df, scores, 3)
 overall_accuracies = overall_accuracy(across_age_df, across_speaker_df, scores, 3)
 across_ages_accuracies = across_ages_accuracy(across_age_df, across_speaker_df, scores, 3)
-within_ages_bucket_accuracies = per_bucket_accuracy(within_age_df, across_speaker_df, thresholds, num_pairs=3)
-across_ages_bucket_accuracies = per_bucket_accuracy(across_age_df, across_speaker_df, thresholds, num_pairs=3)
+within_ages_bucket_accuracies = per_bucket_accuracy(within_age_df, across_speaker_df, scores, num_pairs=3)
+across_ages_bucket_accuracies = per_bucket_accuracy(across_age_df, across_speaker_df, scores, num_pairs=3)
 
 # print overall_accuracies
 if True:

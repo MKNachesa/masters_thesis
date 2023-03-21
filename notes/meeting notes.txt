@@ -12,6 +12,10 @@ Rafal:
 	- tsne with bucketed, set perplexity/number-of-neightbours
 	- take politicians A & B, are they more similar within an age vs at different ages?
 		- speakers within age ranges vs speakers across age ranges
+	- don't want to just set threshold within gender cuz that would make it too hard to match against other genders?
+		- could be too restricted
+		- also for the same age?
+	- make graphs for different years
 	
 Faton:
 	- 

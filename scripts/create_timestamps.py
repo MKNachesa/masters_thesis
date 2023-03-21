@@ -1,11 +1,23 @@
 import numpy as np
 import pandas as pd
 from functools import partial
+import os
+
+# the timestamps in this script were first created for only a subset of the speeches
+# then for all of them, but keeping the timestamps in case it had already been generated
+# in the subset. It's not a guarantee that if it is run again, the timestamps will be the same
+# all_speeches_ts_downsize.parquet gets further edited by audio_to_embedding.py,
+# since some speeches are too long to be converted by titanet (or maybe some other random error occured)
 
 np.random.seed(1)
 
-df_full = pd.read_parquet("../metadata/riksdagen_speeches_with_ages.parquet")
-df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet")
+metadata_dir = "../metadata"
+full_path = os.path.join(metadata_dir, "riksdagen_speeches_with_ages.parquet")
+ts_path = os.path.join(metadata_dir, "all_speeches_ts.parquet")
+ts_downsize_path = os.path.join(metadata_dir, "all_speeches_ts_downsize.parquet")
+
+df_full = pd.read_parquet(full_path)
+# df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet")
 df_full = df_full[~df_full.start_segment.isna()].reset_index(drop=True)
 df_full = df_full.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)
 df_ts = df_ts.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)
@@ -34,10 +46,10 @@ df_ts = df_ts.set_index("dokid_anfnummer")
 df_full.update(df_ts)
 df_full.reset_index(inplace=True)
 
-df_full.to_parquet("../metadata/all_speeches_ts.parquet", index=False)
+df_full.to_parquet(ts_path, index=False)
 cols_to_keep = ["dokid_anfnummer", "dokid", "anforande_nummer", "filename"]
 for dur in ["full", 60, 30, 10, 5, 3, 1]:
   cols_to_keep.append(f"timestamps_{dur}")
 
 df_downsize = df_full[cols_to_keep].reset_index(drop=True)
-df_downsize.to_parquet("../metadata/all_speeches_ts_downsize.parquet", index=False)
+df_downsize.to_parquet(ts_downsize_path, index=False)

@@ -10,4 +10,5 @@ Rafal:
 	- 
 	
 Sara:
-	- do I have enough data?
+	- I did p-tests (on within-speaker within-age VS across-speaker any age), but all groups are statisticially significantly different from each other. Statistical tests might not be useful, unless we want the statistical tests to be between ages? I'm not sure which test to apply then.
+	Either way, our question isn't even whether the above-mentioned groups are statistically different, because our point is to find a threshold such that we make the fewest classification errors. 
