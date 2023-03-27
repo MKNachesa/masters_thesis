@@ -10,21 +10,20 @@ import numpy as np
 from sklearn.metrics import roc_curve, auc
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
+from scipy import stats
 
-scripts_dir = os.getcwd()
-os.chdir("../data")
-data_dir = os.getcwd()
-os.chdir("../results")
-results_dir = os.getcwd()
-os.chdir("../metadata")
-meta_dir = os.getcwd()
-os.chdir(scripts_dir)
 
 def get_cossim_df(num_pairs, parquet_path, save_path):
     print(f"Processing {save_path}")
     #
     NUM_PAIRS = num_pairs
     df = pd.read_parquet(os.path.join(meta_dir, parquet_path))
+    #
+    if "age" in df.columns:
+        df["gender"] = df.intressent_id.apply(lambda x: iid_to_gen[x])
+    else:
+        df["gender1"] = df.intressent_id1.apply(lambda x: iid_to_gen[x])
+        df["gender2"] = df.intressent_id2.apply(lambda x: iid_to_gen[x])
     #
     danfs_to_use = set()
     for i in range(1, NUM_PAIRS+1):
@@ -68,7 +67,7 @@ def get_cossim_df(num_pairs, parquet_path, save_path):
     return df
 
 
-def get_best_threshold_n_roc(df_within, df_across, NUM_PAIRS=3):
+def get_best_threshold_n_roc(df_within, df_across, split="train", NUM_PAIRS=3):
     """get metrics when comparing (across speakers) vs (within speakers at the same age)"""
     scores = dict()
     for speech_length in speech_lengths:
@@ -94,14 +93,14 @@ def get_best_threshold_n_roc(df_within, df_across, NUM_PAIRS=3):
             plt.ylim([0, 1])
             plt.ylabel('True Positive Rate')
             plt.xlabel('False Positive Rate')
-            plt.savefig(os.path.join(results_dir, f"within_speaker_within_age_VS_across_speaker_{speech_length}_AOC_CURVE.png"))
+            plt.savefig(os.path.join(results_dir, f"{split}_AOC_CURVE_within_speaker_within_age_VS_across_speaker_{speech_length}.png"))
             plt.close()
             #
     return scores
 
 
-def vary_threshold_graph(df_within, df_across, NUM_PAIRS=3):
-    """get metrics when comparing (across speakers) vs (within speakers at the same age)"""
+def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3):
+    # """get metrics when comparing (across speakers) vs (within speakers at the same age)"""
     scores = dict()
     for speech_length in speech_lengths:
         within_scores = list(reduce(lambda x, y: x + y, [df_within[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
@@ -164,7 +163,7 @@ def vary_threshold_graph(df_within, df_across, NUM_PAIRS=3):
             ax2.set_ylim(top=1.024396551724138)
             plt.legend()
             plt.title(f"Accuracy VS FNR/FNR at different thresholds for {speech_length} speech length")
-            fig.savefig(os.path.join(results_dir, f'within_age_within_age_VS_across_speaker_{speech_length}_acc_vs_fnr_n_fpr.png'),
+            fig.savefig(os.path.join(results_dir, f'{split}_acc_vs_fnr_n_fpr_within_age_within_age_VS_across_speaker_{speech_length}.png'),
                         format='png',
                         dpi=100,
                         bbox_inches='tight')
@@ -247,16 +246,18 @@ def across_ages_accuracy(across_age_df, across_speaker_df, thresholds, num_pairs
 def per_bucket_accuracy(df_within, df_across, thresholds, num_pairs=3, bucket_size=5):
     scores = dict()
     min_age = df_across.age1.min()
+    bucket_calc = lambda x: f"{(x-min_age)//bucket_size*5+min_age}-{(x-min_age)//bucket_size*5+min_age+4}"
     if "age" in df_within.columns:
-        df_within["bucket"] = df_within["age"].apply(lambda x: (x-min_age)//bucket_size)
+        df_within["bucket"] = df_within["age"].apply(bucket_calc)
     else:
-        df_within["bucket"] = df_within["age1"].apply(lambda x: (x-min_age)//bucket_size)
-    df_across["bucket"] = df_across["age1"].apply(lambda x: (x-min_age)//bucket_size)
+        df_within["bucket"] = df_within["age1"].apply(bucket_calc)
+    df_across["bucket"] = df_across["age1"].apply(bucket_calc)
     num_buckets = df_within.bucket.max()
+    buckets = sorted(list(set(df_within.bucket.tolist())))
     for speech_length in speech_lengths:
         sub_scores = dict()
         threshold = thresholds[f"{speech_length}"][0]
-        for bucket in range(num_buckets):
+        for bucket in buckets:
             within_speaker_preds = list(reduce(lambda x, y: x + y, 
                                             [df_within[df_within["bucket"] == bucket][f"thresh_score_{i}_{speech_length}"].tolist() for i in range(1, num_pairs+1)]))
             across_speaker_preds = df_across[df_across["bucket"] == bucket][f"thresh_score_1_{speech_length}"].tolist()
@@ -280,60 +281,114 @@ def per_bucket_accuracy(df_within, df_across, thresholds, num_pairs=3, bucket_si
     return scores
 
 
+def get_cossim_dfs(split):
+    across_age_df = get_cossim_df(num_pairs=3,
+                                parquet_path=f"{split}_within_speaker_across_age_comparisons.parquet",
+                                save_path=f"{split}_within_speaker_across_age")
+    #
+    within_age_df = get_cossim_df(num_pairs=3,
+                                parquet_path=f"{split}_within_speaker_within_age_comparisons.parquet",
+                                save_path=f"{split}_within_speaker_within_age")
+    #
+    across_speaker_df = get_cossim_df(num_pairs=1,
+                                    parquet_path=f"{split}_across_speaker_comparisons.parquet",
+                                    save_path=f"{split}_across_speaker")
+    #
+    return across_age_df, within_age_df, across_speaker_df
+
+
+scripts_dir = os.getcwd()
+os.chdir("../data")
+data_dir = os.getcwd()
+os.chdir("../results")
+results_dir = os.getcwd()
+os.chdir("../metadata")
+meta_dir = os.getcwd()
+os.chdir(scripts_dir)
+
+
 speech_lengths = ["full", 60, 30, 10, 5, 3, 1]
 NUM_PAIRS = 3
 GENERATE_GRAPHS = True
+speaker_meta_path = os.path.join(meta_dir, "person.csv")
 
-across_age_df = get_cossim_df(num_pairs=3,
-                              parquet_path="within_speaker_across_age_comparisons.parquet",
-                              save_path="within_speaker_across_age")
 
-within_age_df = get_cossim_df(num_pairs=3,
-                              parquet_path="within_speaker_within_age_comparisons.parquet",
-                              save_path="within_speaker_within_age")
+meta_df = pd.read_csv(speaker_meta_path)
+iid_to_gen = dict(map(lambda x: (x[0], "F") if x[1] == "kvinna" else (x[0], "M"), meta_df[["Id", "Kön"]].itertuples(index=False, name=None)))
+train_across_age_df, train_within_age_df, train_across_speaker_df = get_cossim_dfs("train")
+dev_across_age_df, dev_within_age_df, dev_across_speaker_df = get_cossim_dfs("dev")
+test_across_age_df, test_within_age_df, test_across_speaker_df = get_cossim_dfs("test")
 
-across_speaker_df = get_cossim_df(num_pairs=1,
-                                  parquet_path="across_speaker_comparisons.parquet",
-                                  save_path="across_speaker")
 
 if GENERATE_GRAPHS:
     for speech_length in speech_lengths:
-        plt.hist(list(reduce(lambda x, y: x + y, [across_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
-                label="within speakers across ages")
-        plt.hist(across_speaker_df[f"score_1_{speech_length}"].tolist(),
-                label="across speakers")
+        plt.hist(list(reduce(lambda x, y: x + y, [train_across_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
+                label="within speakers across ages", alpha=0.5)#, histtype="step")
+        plt.hist(train_across_speaker_df[f"score_1_{speech_length}"].tolist(),
+                label="across speakers", alpha=0.5)#, histtype="step")
         plt.legend()
-        plt.title(f'across speaker VS within speaker across ages cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"within_speaker_across_age_VS_across_speaker_{speech_length}_cossim_score.png"))
+        plt.title(f'train across speaker VS within speaker across ages cosine similarity scores for {speech_length} speech length')
+        plt.savefig(os.path.join(results_dir, f"train_within_speaker_across_age_VS_across_speaker_{speech_length}_cossim_score.png"))
         plt.close()
 #
     for speech_length in speech_lengths:
-        plt.hist(list(reduce(lambda x, y: x + y, [within_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
-                label="within speakers within ages")
-        plt.hist(across_speaker_df[f"score_1_{speech_length}"].tolist(),
-                label="across speakers")
+        plt.hist(list(reduce(lambda x, y: x + y, [train_within_age_df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
+                label="within speakers within ages", alpha=0.5)#, histtype="step")
+        plt.hist(train_across_speaker_df[f"score_1_{speech_length}"].tolist(),
+                label="across speakers", alpha=0.5)#, histtype="step")
         plt.legend()
-        plt.title(f'across speaker VS within speaker within ages cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"within_speaker_within_age_VS_across_speaker_{speech_length}_cossim_score.png"))
+        plt.title(f'train across speaker VS within speaker within ages cosine similarity scores for {speech_length} speech length')
+        plt.savefig(os.path.join(results_dir, f"train_within_speaker_within_age_VS_across_speaker_{speech_length}_cossim_score.png"))
         plt.close()
 
-scores = get_best_threshold_n_roc(within_age_df, across_speaker_df, 3)
-thresh_scores = vary_threshold_graph(within_age_df, across_speaker_df, 3)
-add_threshold_accs_to_df(within_age_df, across_age_df, across_speaker_df, scores, 3)
-overall_accuracies = overall_accuracy(across_age_df, across_speaker_df, scores, 3)
-across_ages_accuracies = across_ages_accuracy(across_age_df, across_speaker_df, scores, 3)
-within_ages_bucket_accuracies = per_bucket_accuracy(within_age_df, across_speaker_df, scores, num_pairs=3)
-across_ages_bucket_accuracies = per_bucket_accuracy(across_age_df, across_speaker_df, scores, num_pairs=3)
+
+def compare_men_women(within_age_df, split):
+    print(f"speech length\tstatistic\tp-value\n----------------------------------------")
+    for speech_length in speech_lengths:
+        men = list(reduce(lambda x, y: x + y, [within_age_df[within_age_df.gender=="M"][
+            f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        women = list(reduce(lambda x, y: x + y, [within_age_df[within_age_df.gender=="F"][
+            f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        #
+        plt.hist(men,
+                label="M", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        plt.hist(women,
+                label="F", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        plt.legend()
+        plt.title(f'{split} within speaker within ages, m VS f cosine similarity scores for {speech_length} speech length')
+        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_within_age_m_VS_f_{speech_length}_cossim_score.png"))
+        plt.close()
+        stat, pvalue = stats.ttest_ind(men, women)
+        print(f"{speech_length:>13}\t{stat:>9.2f}\t{pvalue:>7.2e}")
+
+
+compare_men_women(train_within_age_df, "train")
+
+scores = get_best_threshold_n_roc(train_within_age_df, train_across_speaker_df, "train", 3)
+thresh_scores = vary_threshold_graph(train_within_age_df, train_across_speaker_df, "train", 3)
+add_threshold_accs_to_df(train_within_age_df, train_across_age_df, train_across_speaker_df, scores, 3)
+add_threshold_accs_to_df(dev_within_age_df, dev_across_age_df, dev_across_speaker_df, scores, 3)
+add_threshold_accs_to_df(test_within_age_df, test_across_age_df, test_across_speaker_df, scores, 3)
+train_overall_accuracies = overall_accuracy(train_across_age_df, train_across_speaker_df, scores, 3)
+dev_overall_accuracies = overall_accuracy(dev_across_age_df, dev_across_speaker_df, scores, 3)
+test_overall_accuracies = overall_accuracy(test_across_age_df, test_across_speaker_df, scores, 3)
+test_across_ages_accuracies = across_ages_accuracy(test_across_age_df, test_across_speaker_df, scores, 3)
+test_within_ages_bucket_accuracies = per_bucket_accuracy(test_within_age_df, test_across_speaker_df, scores, num_pairs=3)
+test_across_ages_bucket_accuracies = per_bucket_accuracy(test_across_age_df, test_across_speaker_df, scores, num_pairs=3)
 
 # print overall_accuracies
-if True:
+def print_overall_accuracies(overall_accuracies):
     print(f"{'length':>6}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
     for key, value in overall_accuracies.items(): 
         print(f"{key:>6}\t{value[0]*100:>9.2f}\t{value[1]*100:>8.2f}\t{value[2]:>10}\t{value[3]:>10}\t{value[4]*100:>5.2f}\t{value[5]*100:>5.2f}")
     print()
 
+print_overall_accuracies(train_overall_accuracies)
+print_overall_accuracies(dev_overall_accuracies)
+print_overall_accuracies(test_overall_accuracies)
+
 # print across_ages_accuracies
-if True:
+def print_across_ages_accuracies(across_ages_accuracies):
     print("-"*(6+9+9+8+10+10+5+5+(7*7)))
     for key, value in across_ages_accuracies.items():
         print(f"{'length':>6}\t{'age range':>9}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
@@ -341,8 +396,10 @@ if True:
             print(f"{key:>6}\t{age_key:>9}\t{age_value[0]*100:>9.2f}\t{age_value[1]*100:>8.2f}\t{age_value[2]:>10}\t{age_value[3]:>10}\t{age_value[4]*100:>5.2f}\t{age_value[5]*100:>5.2f}")
         print("-"*(6+9+9+8+10+10+5+5+(7*7)))
 
+print_across_ages_accuracies(test_across_ages_accuracies)
+
 # print within_ages_bucket_accuracies
-if True:
+def print_within_ages_bucket_accuracies(within_ages_bucket_accuracies):
     print("-"*(6+6+9+8+10+10+5+5+(7*7)))
     for key, value in within_ages_bucket_accuracies.items():
         print(f"{'length':>6}\t{'bucket':>6}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
@@ -350,11 +407,15 @@ if True:
             print(f"{key:>6}\t{bucket_key:>6}\t{bucket_value[0]*100:>9.2f}\t{bucket_value[1]*100:>8.2f}\t{bucket_value[2]:>10}\t{bucket_value[3]:>10}\t{bucket_value[4]*100:>5.2f}\t{bucket_value[5]*100:>5.2f}")
         print("-"*(6+6+9+8+10+10+5+5+(7*7)))
 
+print_within_ages_bucket_accuracies(test_within_ages_bucket_accuracies)
+
 # print across_ages_bucket_accuracies
-if True:
+def print_across_ages_bucket_accuracies(across_ages_bucket_accuracies):
     print("-"*(6+6+9+8+10+10+5+5+(7*7)))
     for key, value in across_ages_bucket_accuracies.items():
         print(f"{'length':>6}\t{'bucket':>6}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
         for bucket_key, bucket_value in value.items():
             print(f"{key:>6}\t{bucket_key:>6}\t{bucket_value[0]*100:>9.2f}\t{bucket_value[1]*100:>8.2f}\t{bucket_value[2]:>10}\t{bucket_value[3]:>10}\t{bucket_value[4]*100:>5.2f}\t{bucket_value[5]*100:>5.2f}")
         print("-"*(6+6+9+8+10+10+5+5+(7*7)))
+
+print_across_ages_bucket_accuracies(test_across_ages_accuracies)

@@ -6,39 +6,39 @@ from collections import defaultdict
 
 def quality_filter(df):
     # Speeches quality filtering
-
+    #
     # get rid of speakers with no shortname, birthyear,
     # and who spoke less than 10 years
     # automatically gets rid of lines with no intressent_id
     df_filt = df[(~df["shortname"].isna()) & (df["birthyear"] != 0)]
-
+    #
     # deduplicate rows
     df_filt = df_filt.drop_duplicates(
         ["dokid_anfnummer", "intressent_id", "start_segment"])
-
+    #
     # get rid of invalid audio files and duplicate speeches
     df_filt = df_filt[(df_filt["count_dokid_anfnummer"] == 1)
                     & (df_filt["valid_audio"] == True)
                     & (~df_filt["start_segment"].isna())]
-
+    #
     # only keep speeches with 1 speech segment
     df_filt = df_filt[df_filt["nr_speech_segments"] == 1.0]
-
+    #
     # keep speeches within this length ratio
     df_filt = df_filt[(df_filt["length_ratio"] > 0.7)
                     & (df_filt["length_ratio"] < 1.3)]
-
+    #
     # keep speeches within this overlap ratio
     df_filt = df_filt[(df_filt["overlap_ratio"] > 0.7)
                     & (df_filt["overlap_ratio"] < 1.3)]
-
+    #
     # exclude speeches where speakers mention themselves (probably wrong name)
     df_filt = df_filt[df_filt[["anftext", "shortname"]].apply(
         lambda x: x.shortname not in x.anftext.lower(), axis=1)]
-
+    #
     # reset index
     df_filt = df_filt.reset_index(drop=True)
-
+    #
     # get rid of non-monotonically increasing speeches
     print("Getting rid of non-monotonically following speeches")
     dokids = set(df_filt["dokid"].tolist())
@@ -55,16 +55,16 @@ def quality_filter(df):
                 prev_anf = mini_df.loc[i-1]["dokid_anfnummer"]
                 non_monotonic.add(prev_anf)
                 non_monotonic.add(anf)
-
+                #
     df_filt = df_filt[df_filt["dokid_anfnummer"].apply(lambda x: x not in non_monotonic)]
-
+    #
     # only keep speakers who have at least 3 speeches every year
     at_least_3 = df_filt.groupby(
         ["intressent_id", "age"]).agg("count")["party"].to_dict()
     df_filt["at_least_3"] = df_filt[["intressent_id", "age"]].apply(
         lambda x: at_least_3[(x.intressent_id, x.age)] >= 3, axis=1)
     df_filt = df_filt[df_filt["at_least_3"] == True]
-
+    #
     # reset index
     df = df_filt.reset_index(drop=True)
     return df
@@ -114,31 +114,43 @@ def select_ids(df, max_bucket_size):
             buckets[i][gender].add(iid)
             bucket_genders[i][gender] += 1
     #
+    for i, bucket in enumerate(buckets):
+        bucket_size = len(buckets[i]["F"]) + len(buckets[i]["M"])
+        if bucket_size < 4:
+            buckets[i] = {"F": set(), "M": set()}
+            #
     return buckets
 
 
 def get_test_df(df):
     # dataframe for speakers with 10+ years of speaking experience, 
     # and 3+ speeches every year they were active
-
+    #
+    print("Calculating over 10 and over 15 years speakers")
+    df["first_debate"] = df.groupby(["intressent_id"])["debatedate"].transform(min)
+    df["last_debate"] = df.groupby(["intressent_id"])["debatedate"].transform(max)
+    #
+    df["over_10"] = df[["first_debate", "last_debate"]].apply(
+        lambda x: (x.last_debate - x.first_debate).days >= 365 * 10, axis=1)
     df_filt = df[(df["over_10"] == True)]
-
+    #
+    df_filt = df_filt.drop(["first_debate", "last_debate"], axis=1)
     # get only those speakers who spoke all 10+ years they were active
     df_filt["min_age"] = df_filt.groupby(["intressent_id"])["age"].transform("min")
     df_filt["max_age"] = df_filt.groupby(["intressent_id"])["age"].transform("max")
     df_filt["age_range"] = df_filt[["min_age", "max_age"]].apply(
         lambda x: set(range(int(x.min_age), int(x.max_age)+1)), axis=1)
-
+    #
     sp_to_range = df_filt.groupby(["intressent_id"])["age"].apply(set).to_dict()
     df_filt["actual_age_range"] = df_filt["intressent_id"].apply(
         lambda x: sp_to_range[x])
     df_filt["spoke_all_years"] = df_filt[["actual_age_range", "age_range"]].apply(
         lambda x: x.actual_age_range == x.age_range, axis=1)
-
+    #
     df_filt = df_filt[df_filt["spoke_all_years"] == True]
-
+    #
     df_filt = df_filt.drop(["spoke_all_years", "min_age", "max_age", "age_range", "actual_age_range"], axis=1)
-
+    #
     df = df_filt.reset_index(drop=True)
     return df
 
@@ -146,14 +158,14 @@ def get_test_df(df):
 def get_train_df(df, df_buck_reduce):
     speakers_to_ignore = set(df_buck_reduce.intressent_id.tolist())
     df_train = df[df.intressent_id.apply(lambda x: x not in speakers_to_ignore)].reset_index(drop=True)
-
+    #
     return df_train
 
 
 def get_train_dev_ids(buckets, train_prop):
     train_ids = set()
     dev_ids = set()
-
+    #
     for bucket in buckets:
         for gender in "FM":
             if len(bucket[gender]) < 4:
@@ -161,7 +173,7 @@ def get_train_dev_ids(buckets, train_prop):
             else:
                 split = int(len(bucket[gender])*train_prop)
                 train_ids.update(list(bucket[gender])[:split])
-                dev_ids.update(list(bucket[gender])[:split])
+                dev_ids.update(list(bucket[gender])[split:])
     return train_ids, dev_ids
 
 # set up file paths ------------------------------------------------
