@@ -167,6 +167,7 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3):
                         format='png',
                         dpi=100,
                         bbox_inches='tight')
+            plt.close()
             #
     return scores
 
@@ -294,7 +295,10 @@ def get_cossim_dfs(split):
                                     parquet_path=f"{split}_across_speaker_comparisons.parquet",
                                     save_path=f"{split}_across_speaker")
     #
-    return across_age_df, within_age_df, across_speaker_df
+    across_speaker_within_age_df = get_cossim_df(num_pairs=1,
+                                                parquet_path=f"{split}_across_speaker_within_age_comparisons.parquet",
+                                                save_path=f"{split}_across_speaker_within_age")
+    return across_age_df, within_age_df, across_speaker_df, across_speaker_within_age_df
 
 
 scripts_dir = os.getcwd()
@@ -315,9 +319,9 @@ speaker_meta_path = os.path.join(meta_dir, "person.csv")
 
 meta_df = pd.read_csv(speaker_meta_path)
 iid_to_gen = dict(map(lambda x: (x[0], "F") if x[1] == "kvinna" else (x[0], "M"), meta_df[["Id", "Kön"]].itertuples(index=False, name=None)))
-train_across_age_df, train_within_age_df, train_across_speaker_df = get_cossim_dfs("train")
-dev_across_age_df, dev_within_age_df, dev_across_speaker_df = get_cossim_dfs("dev")
-test_across_age_df, test_within_age_df, test_across_speaker_df = get_cossim_dfs("test")
+train_across_age_df, train_within_age_df, train_across_speaker_df, train_across_speaker_within_age_df = get_cossim_dfs("train")
+dev_across_age_df, dev_within_age_df, dev_across_speaker_df, dev_across_speaker_within_age_df = get_cossim_dfs("dev")
+test_across_age_df, test_within_age_df, test_across_speaker_df, test_across_speaker_within_age_df = get_cossim_dfs("test")
 
 
 if GENERATE_GRAPHS:
@@ -342,27 +346,103 @@ if GENERATE_GRAPHS:
         plt.close()
 
 
-def compare_men_women(within_age_df, split):
+def compare_men_women_within_speaker(within_age_df, split):
     print(f"speech length\tstatistic\tp-value\n----------------------------------------")
+    props = dict(boxstyle='round', facecolor='white', alpha=0.5)
     for speech_length in speech_lengths:
         men = list(reduce(lambda x, y: x + y, [within_age_df[within_age_df.gender=="M"][
             f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
         women = list(reduce(lambda x, y: x + y, [within_age_df[within_age_df.gender=="F"][
             f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
         #
+        stat, pvalue = stats.ttest_ind(men, women)
+        text = f"p = {pvalue:.2e}"
         plt.hist(men,
                 label="M", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
         plt.hist(women,
                 label="F", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
-        plt.legend()
+        plt.legend(loc="upper left")
+        y_lim = plt.gca().get_ylim()[1]*0.95
+        plt.text(0.05, y_lim, text, verticalalignment="top", bbox=props)
         plt.title(f'{split} within speaker within ages, m VS f cosine similarity scores for {speech_length} speech length')
         plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_within_age_m_VS_f_{speech_length}_cossim_score.png"))
         plt.close()
-        stat, pvalue = stats.ttest_ind(men, women)
         print(f"{speech_length:>13}\t{stat:>9.2f}\t{pvalue:>7.2e}")
 
 
-compare_men_women(train_within_age_df, "train")
+compare_men_women_within_speaker(train_within_age_df, "train")
+
+
+def compare_men_women_across_speaker(across_speaker_within_age_df, split):
+    print(f"speech length\tstatistic\tp-value\n----------------------------------------")
+    props = dict(boxstyle='round', facecolor='white', alpha=0.5)
+    NUM_PAIRS=1
+    stats_df = pd.DataFrame(columns=["comparison", "length", "mean_vp", "std_vp", "ci_lower", "ci_upper"])
+    for speech_length in speech_lengths:
+        # men = list(reduce(lambda x, y: x + y, [across_speaker_within_age_df[
+        #     (across_speaker_within_age_df.gender1=="M") & (across_speaker_within_age_df.gender2=="M")][
+        #     f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        # women = list(reduce(lambda x, y: x + y, [across_speaker_within_age_df[
+        #     (across_speaker_within_age_df.gender1=="F") & (across_speaker_within_age_df.gender2=="F")][
+        #     f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        same_gender = list(reduce(lambda x, y: x + y, [across_speaker_within_age_df[
+            (across_speaker_within_age_df.gender1==across_speaker_within_age_df.gender2)][
+            f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        men_vs_women = list(reduce(lambda x, y: x + y, [across_speaker_within_age_df[
+            (across_speaker_within_age_df.gender1!=across_speaker_within_age_df.gender2)][
+            f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
+        #
+        mean = np.mean(same_gender)
+        std = np.std(same_gender)
+        t = np.abs(stats.t.ppf((1-0.95)/2, len(same_gender)-1))
+        ci = (mean-std*t/np.sqrt(len(same_gender)), mean+std*t/np.sqrt(len(same_gender)))
+        stats_dict = {"comparison": "same", "length": speech_length, "mean_vp": np.mean(same_gender),
+                      "std_vp": np.std(same_gender), "ci_lower":ci[0], "ci_upper":ci[1]}
+        stats_df = pd.concat([pd.DataFrame(stats_dict, index=[0]), stats_df]).reset_index(drop=True)
+        #
+        # print("1", speech_length)
+        mean = np.mean(men_vs_women)
+        std = np.std(men_vs_women)
+        t = np.abs(stats.t.ppf((1-0.95)/2, len(men_vs_women)-1))
+        ci = (mean-std*t/np.sqrt(len(men_vs_women)), mean+std*t/np.sqrt(len(men_vs_women)))
+        stats_dict = {"comparison": "diff", "length": speech_length, "mean_vp": np.mean(men_vs_women),
+                      "std_vp": np.std(men_vs_women), "ci_lower":ci[0], "ci_upper":ci[1]}
+        stats_df = pd.concat([pd.DataFrame(stats_dict, index=[0]), stats_df]).reset_index(drop=True)
+        # stat, pvalue = stats.f_oneway(men, women, men_vs_women)
+        stat, pvalue = stats.ttest_ind(same_gender, men_vs_women)
+        text = f"p = {pvalue:.2e}"
+        # plt.hist(men,
+        #         label="M", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        # plt.hist(women,
+        #         label="F", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        plt.hist(same_gender,
+                label="same gender", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        plt.hist(men_vs_women,
+                label="different gender", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))#, histtype="step")
+        plt.legend(loc="upper left")
+        y_lim = plt.gca().get_ylim()[1]*0.95
+        plt.text(0.70, y_lim, text, verticalalignment="top", bbox=props)
+        plt.title(f'{split} across speaker within ages,\nsame VS diff gender cosine similarity scores for {speech_length} speech length')
+        plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_within_age_same_VS_diff_gender_{speech_length}_cossim_score.png"))
+        plt.close()
+        print(f"{speech_length:>13}\t{stat:>9.2f}\t{pvalue:>7.2e}")
+        #
+    df = stats_df[stats_df.comparison=="same"]
+    x = [f"{i}" for i in df["length"].tolist()]
+    plt.plot(x, df["mean_vp"], label="same gender")
+    plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
+    df = stats_df[stats_df.comparison=="diff"]
+    x = [f"{i}" for i in df["length"].tolist()]
+    plt.plot(x, df["mean_vp"], label="different gender")
+    plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
+    plt.title(f'{split} cosine similarity score means for all speech lengths,\ndifferent speakers, same ages, same VS diff gender')
+    plt.legend()
+    plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_within_age_same_VS_diff_gender_means_cossim_score.png"))
+    plt.close()
+
+
+compare_men_women_across_speaker(train_across_speaker_within_age_df, "train")
+
 
 scores = get_best_threshold_n_roc(train_within_age_df, train_across_speaker_df, "train", 3)
 thresh_scores = vary_threshold_graph(train_within_age_df, train_across_speaker_df, "train", 3)
@@ -419,3 +499,42 @@ def print_across_ages_bucket_accuracies(across_ages_bucket_accuracies):
         print("-"*(6+6+9+8+10+10+5+5+(7*7)))
 
 print_across_ages_bucket_accuracies(test_across_ages_accuracies)
+
+
+def across_ages_graph(across_age_df, across_speaker_df, thresholds, split="train", num_pairs=3):
+    scores = dict()
+    across_age_df["age_diff"] = across_age_df[["age1", "age2"]].apply(lambda x: x.age2-x.age1, axis=1)
+    across_speaker_df["age_diff"] = across_speaker_df[["age1", "age2"]].apply(lambda x: x.age2-x.age1, axis=1)
+    # stats_df = pd.DataFrame(columns=["comparison", "length", "mean_vp", "std_vp", "ci_lower", "ci_upper"])
+    for speech_length in speech_lengths:
+        sub_scores = dict()
+        # threshold = thresholds[f"{speech_length}"][0]
+        for age_diff in range(0, 9+1):
+            across_age_preds = list(reduce(lambda x, y: x + y, 
+                                            [across_age_df[across_age_df["age_diff"] == age_diff]
+                                            [f"score_{i}_{speech_length}"].tolist() for i in range(1, num_pairs+1)]))
+            across_speaker_preds = across_speaker_df[across_speaker_df["age_diff"] == age_diff][f"score_1_{speech_length}"].tolist()
+            #
+            # all_preds = across_age_preds + across_speaker_preds
+            # all_true = [1 for _ in range(len(across_age_preds))] + [0 for _ in range(len(across_speaker_preds))]
+            # #
+            # accuracy = sum([1 if all_preds[i] == all_true[i] else 0 for i in range(len(all_true))])/len(all_true)
+            # #
+            # false_negs = sum([1 if (all_preds[i] != all_true[i]) and (all_true[i] == 1) else 0
+            #                     for i in range(len(all_true))])
+            # fnr = false_negs/len(across_age_preds)
+            # #
+            # false_poss = sum([1 if (all_preds[i] != all_true[i]) and (all_true[i] == 0) else 0
+            #                     for i in range(len(all_true))])
+            # fpr = false_poss/len(across_speaker_preds)
+            # #
+            # data = (threshold, accuracy, false_negs, false_poss, fnr, fpr)
+            # sub_scores[f"{age_diff}"] = data
+            plt.hist(across_age_preds, label=f"{age_diff}, count={len(across_age_preds)}", alpha=0.5, bins=np.arange(-0.2, 1, 0.02))
+        # scores[f"{speech_length}"] = sub_scores
+        plt.legend(title="age differences")
+        plt.title(f'{split} within speaker across ages cosine similarities for {speech_length} speech length')
+        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_across_age_{speech_length}_cossim_score.png"))
+        plt.close()
+
+across_ages_graph(test_across_age_df, test_across_speaker_df, scores, split="test")

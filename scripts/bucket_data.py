@@ -167,10 +167,12 @@ def get_train_dev_ids(buckets, train_prop):
     dev_ids = set()
     #
     for bucket in buckets:
-        for gender in "FM":
-            if len(bucket[gender]) < 4:
-                train_ids.update(bucket[gender])
-            else:
+        size_data = len(bucket["F"]) + len(bucket["M"])
+        if round(size_data * (1 - train_prop)) < 4:
+            train_ids.update(bucket["F"])
+            train_ids.update(bucket["M"])
+        else:
+            for gender in "FM":
                 split = int(len(bucket[gender])*train_prop)
                 train_ids.update(list(bucket[gender])[:split])
                 dev_ids.update(list(bucket[gender])[split:])
@@ -210,6 +212,7 @@ df_train = get_train_df(df, df_buck_reduce)
 buckets = select_ids(df_train, 20)
 
 train_ids, dev_ids = get_train_dev_ids(buckets, 0.8)
+print(len(dev_ids))
 
 df_train_reduce = df_train[df_train["intressent_id"].apply(lambda x: x in train_ids)].reset_index(drop=True)
 df_train_reduce.to_parquet(path_train_bucketed, index=False)

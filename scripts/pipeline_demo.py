@@ -201,11 +201,18 @@ def across_speaker_within_age(ids_to_dokanf, split):
     min_age = 19 # from train, min(list(map(lambda x: x[1], ids_to_dokanf.keys())))
     bucket_age = lambda x: f"{(x-min_age)//5*5+min_age}-{(x-min_age)//5*5+min_age+4}"
     #
+    ids_to_remove = set()
+    # print(f"length ids_to_dokanf {len(ids_to_dokanf)}")
     # for each speaker at each age, pair a speech of theirs with a speech from NUM_PAIRS other speakers
     for ids1, dokid_anfnummers1 in ids_to_dokanf.items():
         id1_bucket_age = bucket_age(ids1[1])
         tmp_ids_to_dokanf = dict(filter(lambda x: bucket_age(x[0][1]) == id1_bucket_age, ids_to_dokanf.items()))
-        print(id1_bucket_age, tmp_ids_to_dokanf.keys())
+        ids_in_bucket = set(map(lambda x: x[0], tmp_ids_to_dokanf.keys()))
+        # print(ids_in_bucket)
+        if len(ids_in_bucket) < 4:
+            ids_to_remove.update(tmp_ids_to_dokanf.keys())
+            continue
+        # print(id1_bucket_age, ids_in_bucket)
         for _ in range(NUM_PAIRS):
             # find a random other speaker with the same bucket age
             # (speaker is not the same as current speaker and the pair doesn't already exist in this order)
@@ -218,10 +225,19 @@ def across_speaker_within_age(ids_to_dokanf, split):
             # (possible it exists in the reverse order though)
             comparisons[(ids1, ids2)] = get_pair(dokid_anfnummers1, dokid_anfnummers2)
             #
+    for key in ids_to_remove:
+        del ids_to_dokanf[key]
+    # print(len(comparisons))
+    # print(len(ids_to_remove))
+    # print(f"length ids_to_dokanf {len(ids_to_dokanf)}")
     # save to a dataframe
     new_df = pd.DataFrame.from_dict(comparisons, columns=["danf1", "danf2"], orient="index")
     new_df = new_df.reset_index()
+    # try:
     new_df[["pair1", "pair2"]] = pd.DataFrame(new_df["index"].tolist(), index=new_df.index)
+    # except:
+    #     print(new_df.head())
+    #     raise
     new_df[["intressent_id1", "age1"]] = pd.DataFrame(new_df["pair1"].tolist(), index=new_df.index)
     new_df[["intressent_id2", "age2"]] = pd.DataFrame(new_df["pair2"].tolist(), index=new_df.index)
     new_df.drop(["pair1", "pair2", "index"], axis=1, inplace=True) 
@@ -238,10 +254,10 @@ def create_split_pairs(df_path, split, age_range):
     df_path = os.path.join(metadata_dir, df_path)
     df = pd.read_parquet(df_path)
     ids_to_dokanf = get_ids_to_dokanf(df, age_range)
+    across_speaker_within_age(ids_to_dokanf, split)
+    across_speaker_any_age(ids_to_dokanf, split)
     within_speaker_within_age(ids_to_dokanf, split)
     within_speaker_across_age(ids_to_dokanf, split)
-    across_speaker_any_age(ids_to_dokanf, split)
-    across_speaker_within_age(ids_to_dokanf, split)
     print()
 
 
@@ -253,5 +269,5 @@ metadata_dir = os.path.join(thesis_dir, "metadata")
 
 
 create_split_pairs("bucketed_speeches.parquet", "test", 10)
-# create_split_pairs("bucketed_training_speeches.parquet", "train", 100)
-# create_split_pairs("bucketed_dev_speeches.parquet", "dev", 100)
+create_split_pairs("bucketed_training_speeches.parquet", "train", 100)
+create_split_pairs("bucketed_dev_speeches.parquet", "dev", 100)
