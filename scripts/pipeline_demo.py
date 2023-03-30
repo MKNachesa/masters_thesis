@@ -193,7 +193,7 @@ def across_speaker_within_age(ids_to_dokanf, split):
     print(f"\tProcessing across speaker within age")
     # across speakers
     # create speech pairs between different speakers
-    save_path = os.path.join(metadata_dir, f"{split}_across_speaker_within_age_comparisons.parquet")
+    save_path = os.path.join(metadata_dir, f"{split}_across")
     #
     comparisons = dict()
     NUM_PAIRS = 3
