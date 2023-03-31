@@ -11,6 +11,8 @@ from sklearn.metrics import roc_curve, auc
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 from scipy import stats
+from matplotlib.patches import Rectangle
+import seaborn as sns
 
 
 def get_cossim_df(num_pairs, parquet_path, save_path):
@@ -531,38 +533,52 @@ print_overall_accuracies(train_overall_accuracies)
 print_overall_accuracies(dev_overall_accuracies)
 print_overall_accuracies(test_overall_accuracies)
 
-# print across_ages_accuracies
-def print_across_ages_accuracies(across_ages_accuracies):
+
+def print_comparison_accuracies(bucket_accuracies, split="train", mode="across", thresh_base="across", comparison="age_range"):
+    """comparison: "age_range" or "age_diff" (age difference)
+    mode: "across" or "within" (always "across" when "comparison"=="age_diff)"""
+    stats_df = pd.DataFrame(columns=[comparison, "length", "accuracy", "threshold"])
     print("-"*(6+9+9+8+10+10+5+5+(7*7)))
-    for key, value in across_ages_accuracies.items():
-        print(f"{'length':>6}\t{'age range':>9}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
-        for age_key, age_value in value.items():
-            print(f"{key:>6}\t{age_key:>9}\t{age_value[0]*100:>9.2f}\t{age_value[1]*100:>8.2f}\t{age_value[2]:>10}\t{age_value[3]:>10}\t{age_value[4]*100:>5.2f}\t{age_value[5]*100:>5.2f}")
+    for key, value in bucket_accuracies.items():
+        print(f"{'length':>6}\t{comparison:>9}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
+        for bucket_key, bucket_value in value.items():
+            print(f"{key:>6}\t{bucket_key:>9}\t{bucket_value[0]*100:>9.2f}\t{bucket_value[1]*100:>8.2f}\t{bucket_value[2]:>10}\t{bucket_value[3]:>10}\t{bucket_value[4]*100:>5.2f}\t{bucket_value[5]*100:>5.2f}")
+            accuracy = bucket_value[1]
+            # std = np.std(same_gender)
+            # t = np.abs(stats.t.ppf((1-0.95)/2, len(same_gender)-1))
+            # ci = (mean-std*t/np.sqrt(len(same_gender)), mean+std*t/np.sqrt(len(same_gender)))
+            stats_dict = {comparison: bucket_key, "length": key, "accuracy": accuracy*100, "threshold": bucket_value[0]*100}
+            stats_df = pd.concat([stats_df, pd.DataFrame(stats_dict, index=[0])]).reset_index(drop=True)
         print("-"*(6+9+9+8+10+10+5+5+(7*7)))
+        #
+    extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    length_col = ["speech length"] + speech_lengths
+    threshold_col = ["threshold"]
+    line_col = [extra]
+    label_empty = [""]
+    # fig, ax = plt.subplots(1, 1)
+    for speech_length in speech_lengths:
+        df = stats_df[stats_df.length==f"{speech_length}"]
+        x = [f"{i}" for i in df[comparison].tolist()]
+        # print(df.columns, "\n", df.head())
+        threshold = df.threshold.iloc[0]
+        threshold_col.append(f"{threshold:.2f}")
+        img, = plt.plot(x, df["accuracy"], label=f'{f"{speech_length}, {threshold:.2f}":>20}')
+        line_col.append(img)
+        # plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
+    plt.title(f'{split} accuracy for all speech lengths,\ndifferent speakers for {thresh_base} thresh base')
+    legend_handle = line_col + 3 * len(threshold_col) * [extra]
+    legend_labels = np.concatenate([label_empty * len(length_col), label_empty * len(length_col), length_col, threshold_col])
+    plt.legend(legend_handle, legend_labels, ncol=4, handletextpad=-2, bbox_to_anchor=(1,1))
+    plt.gca().set_xlabel(" ".join(comparison.split("_")))
+    plt.gca().set_ylabel("accuracy")
+    # sns.move_legend(plt.gca(), "center left", bbox_to_anchor=(1,0.5))
+    plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_{mode}_age_{thresh_base}_thresh_base_{comparison}_all_lengths_accuracy_curves.png"), bbox_inches="tight")
+    plt.close()
 
-print_across_ages_accuracies(test_across_ages_accuracies)
-
-# print within_ages_bucket_accuracies
-def print_within_ages_bucket_accuracies(within_ages_bucket_accuracies):
-    print("-"*(6+6+9+8+10+10+5+5+(7*7)))
-    for key, value in within_ages_bucket_accuracies.items():
-        print(f"{'length':>6}\t{'bucket':>6}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
-        for bucket_key, bucket_value in value.items():
-            print(f"{key:>6}\t{bucket_key:>6}\t{bucket_value[0]*100:>9.2f}\t{bucket_value[1]*100:>8.2f}\t{bucket_value[2]:>10}\t{bucket_value[3]:>10}\t{bucket_value[4]*100:>5.2f}\t{bucket_value[5]*100:>5.2f}")
-        print("-"*(6+6+9+8+10+10+5+5+(7*7)))
-
-print_within_ages_bucket_accuracies(test_within_ages_bucket_accuracies)
-
-# print across_ages_bucket_accuracies
-def print_across_ages_bucket_accuracies(across_ages_bucket_accuracies):
-    print("-"*(6+6+9+8+10+10+5+5+(7*7)))
-    for key, value in across_ages_bucket_accuracies.items():
-        print(f"{'length':>6}\t{'bucket':>6}\t{'threshold':>9}\t{'accuracy':>8}\t{'false_negs':>10}\t{'false_poss':>10}\t{'fnr':>5}\t{'fpr':>5}")
-        for bucket_key, bucket_value in value.items():
-            print(f"{key:>6}\t{bucket_key:>6}\t{bucket_value[0]*100:>9.2f}\t{bucket_value[1]*100:>8.2f}\t{bucket_value[2]:>10}\t{bucket_value[3]:>10}\t{bucket_value[4]*100:>5.2f}\t{bucket_value[5]*100:>5.2f}")
-        print("-"*(6+6+9+8+10+10+5+5+(7*7)))
-
-print_across_ages_bucket_accuracies(test_across_ages_accuracies)
+print_comparison_accuracies(test_across_ages_accuracies, "test", "across", "across", "age_diff")
+print_comparison_accuracies(test_across_ages_bucket_accuracies, "test", "across", "across")
+print_comparison_accuracies(test_within_ages_bucket_accuracies, "test", "within", "across")
 
 
 def across_ages_graph(across_age_df, across_speaker_df, thresholds, split="train", num_pairs=3):
@@ -638,15 +654,19 @@ across_ages_graph(test_across_age_df, test_across_speaker_df, scores, split="tes
 
 scores = get_best_threshold_n_roc(train_within_age_df, train_across_speaker_within_age_df, "train", 3, mode="within")
 thresh_scores = vary_threshold_graph(train_within_age_df, train_across_speaker_within_age_df, "train", 3, mode="within")
-add_threshold_accs_to_df(train_within_age_df, train_across_age_df, train_across_speaker_within_age_df, scores, 3, mode="within")
-add_threshold_accs_to_df(dev_within_age_df, dev_across_age_df, dev_across_speaker_within_age_df, scores, 3, mode="within")
-add_threshold_accs_to_df(test_within_age_df, test_across_age_df, test_across_speaker_within_age_df, scores, 3, mode="within")
-train_overall_accuracies = overall_accuracy(train_across_age_df, train_across_speaker_within_age_df, scores, 3, mode="within")
-dev_overall_accuracies = overall_accuracy(dev_across_age_df, dev_across_speaker_within_age_df, scores, 3, mode="within")
-test_overall_accuracies = overall_accuracy(test_across_age_df, test_across_speaker_within_age_df, scores, 3, mode="within")
-test_across_ages_accuracies = across_ages_accuracy(test_across_age_df, test_across_speaker_within_age_df, scores, 3, mode="within")
-test_within_ages_bucket_accuracies = per_bucket_accuracy(test_within_age_df, test_across_speaker_within_age_df, scores, num_pairs=3, mode="within")
-test_across_ages_bucket_accuracies = per_bucket_accuracy(test_across_age_df, test_across_speaker_within_age_df, scores, num_pairs=3, mode="within")
+add_threshold_accs_to_df(train_within_age_df, train_across_age_df, train_across_speaker_within_age_df, scores, 3)
+add_threshold_accs_to_df(dev_within_age_df, dev_across_age_df, dev_across_speaker_within_age_df, scores, 3)
+add_threshold_accs_to_df(test_within_age_df, test_across_age_df, test_across_speaker_within_age_df, scores, 3)
+train_overall_accuracies = overall_accuracy(train_across_age_df, train_across_speaker_within_age_df, scores, 3)
+dev_overall_accuracies = overall_accuracy(dev_across_age_df, dev_across_speaker_within_age_df, scores, 3)
+test_overall_accuracies = overall_accuracy(test_across_age_df, test_across_speaker_within_age_df, scores, 3)
+test_across_ages_accuracies = across_ages_accuracy(test_across_age_df, test_across_speaker_df, scores, 3)
+test_within_ages_bucket_accuracies = per_bucket_accuracy(test_within_age_df, test_across_speaker_within_age_df, scores, num_pairs=3)
+test_across_ages_bucket_accuracies = per_bucket_accuracy(test_across_age_df, test_across_speaker_within_age_df, scores, num_pairs=3)
+
+print_comparison_accuracies(test_across_ages_accuracies, "test", "across", "within", "age_diff")
+print_comparison_accuracies(test_across_ages_bucket_accuracies, "test", "across", "within")
+print_comparison_accuracies(test_within_ages_bucket_accuracies, "test", "within", "within")
 
 print_overall_accuracies(train_overall_accuracies)
 print_overall_accuracies(dev_overall_accuracies)
