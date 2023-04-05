@@ -2,6 +2,8 @@
 
 **read_metadata.py**
 Adds metadata to all speeches, such as speech quality, speaker name, gender, etc.
+Saves to
+	- *riksdagen_speeches_with_ages.parquet*
 
 **create_timestamps.py**
 Creates timestamps for all speeches with length >= 80 secs at various lengths

@@ -16,6 +16,9 @@ Rafal:
 		- could be too restricted
 		- also for the same age?
 	- make graphs for different years
+	- one threshold for everything preferably
+	- error analysis
+	- mix different lengths to calculate one threshold
 	
 Faton:
 	- 
@@ -25,5 +28,6 @@ Sara:
 	- background = Related Work, *not* mine
 	- motivation for why processing was done in a certain way
 	- gender and across age comparisons for different speakers
-	- compute threshold for a subset of speakers
-	- compute threshold from bigger group based on at least 3 speeches per year, separate from current group
+	V compute threshold for a subset of speakers
+	V compute threshold from bigger group based on at least 3 speeches per year, separate from current group
+	- does it make a difference to use within-age for across speakers?

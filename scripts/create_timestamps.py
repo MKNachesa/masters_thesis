@@ -17,7 +17,7 @@ ts_path = os.path.join(metadata_dir, "all_speeches_ts.parquet")
 ts_downsize_path = os.path.join(metadata_dir, "all_speeches_ts_downsize.parquet")
 
 df_full = pd.read_parquet(full_path)
-# df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet")
+df_ts = pd.read_parquet("../metadata/filtered_speeches_ts.parquet") 
 df_full = df_full[~df_full.start_segment.isna()].reset_index(drop=True)
 df_full = df_full.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)
 df_ts = df_ts.drop_duplicates(["dokid_anfnummer"]).reset_index(drop=True)

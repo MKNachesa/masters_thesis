@@ -135,15 +135,16 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3, mode=
         # append data points to list
             # the list should start with the first threshold that yields no false negatives
             # if false_negs == 0:
-            if threshold <= across_min:
-                threshold_scores = [data]
-            # the list shold end with the last threshold that yields no false positives (I think?)
-            # elif false_poss == 0:
-            elif threshold > within_max:
-                threshold_scores.append(data)
-                break
-            else:
-                threshold_scores.append(data)
+            #
+            # if threshold <= across_min:
+            #     threshold_scores = [data]
+            # # the list shold end with the last threshold that yields no false positives (I think?)
+            # # elif false_poss == 0:
+            # elif threshold > within_max:
+            #     threshold_scores.append(data)
+            #     break
+            # else:
+            threshold_scores.append(data)
             #
         scores[f"{speech_length}"] = threshold_scores
         #
@@ -163,6 +164,7 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3, mode=
             ax.spines['left'].set_color('red')
             ax.yaxis.label.set_color('red')
             ax.tick_params(axis='y', colors='red')
+            ax.set_ylim(top=1.024396551724138)
             plt.legend(loc="upper right")
             #
             ax2 = ax.twinx()
@@ -671,7 +673,3 @@ print_comparison_accuracies(test_within_ages_bucket_accuracies, "test", "within"
 print_overall_accuracies(train_overall_accuracies)
 print_overall_accuracies(dev_overall_accuracies)
 print_overall_accuracies(test_overall_accuracies)
-
-print_across_ages_accuracies(test_across_ages_accuracies)
-print_within_ages_bucket_accuracies(test_within_ages_bucket_accuracies)
-print_across_ages_bucket_accuracies(test_across_ages_accuracies)

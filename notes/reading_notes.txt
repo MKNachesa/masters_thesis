@@ -15,7 +15,7 @@ Oscar's thesis
 	- I should look toward extracting the dialects of my speakers (or having smbd or a model annotate them)
 	- Btw doesn't emotion affect speaker recognition too, I should find a paper on that
 	- Should I filter out non-speech frames?
-	- "To tackle this issue the authors of [12] propose a model with a multiclass cross-entropy objective instead of an end-to-end loss, meaning that the model is trained to classify speakers instead of separating same-speaker and different-speaker pairs." Not as much an advantage as it seems. How do you add new speakers to this?
+	- "To tackle this issue the authors of [12] propose a model with a multiclass cross-entropy objective instead of an end-to-end loss, meaning that the model is trained to classify speakers instead of separating same-speaker and different-speaker pairs." (p. 5) Not as much an advantage as it seems. How do you add new speakers to this?
 	- "Ecapa is based on TDNNs (explained in more detail in section 2.6.1) and squeeze and excitation layers (further discussed in section 2.6.3). The inputs to the model are 80 dimensional MFCCs (section 2.4.1) with a frame-width of 25ms (10ms frame shift). Cosine similarity is used as back-end. The model is trained on the VoxCeleb2 dataset with data augmentation used. The model reached an EER of 0.87% on the VoxCeleb1 Test dataset" I need to find out what kind of data is in voxceleb1. Relatable to the parliament data?
 	- In [18] a model called TitaNet (Titanet) is developed. Titanet is built upon 1D depth-wise convolutions (section 2.6.2) with squeeze and excitation layers (section 2.6.3). VoxCeleb 1 & 2 dev, NIST SRE datasets (2004–2008), Switchboard, Fisher and Librispeech are used for training. The models are then evaluated on the VoxCeleb 1 Test dataset. An EER of 0.68% is reached" Same here. Find out what this data looks like. Maybe this model would do better on parliament data? Or worse lol cuz it's too general :')
 	- "Inference Time Consumption" I don't need to do anything in an online fashion (identify a speaker in real time) but I do need to search a database. And that should be fast enough
@@ -167,3 +167,21 @@ Voice Biometrics: Deep Learning-based Voiceprint Authentication System (Boles & 
 	- Not sure what the point of this paper is
 		- I guess it's from quite a long time ago
 		- Maybe the number of MFCCs and the length of audio clips is significant?
+		
+Deep Neural Network Embeddings for Text-Independent Speaker Verification (Snyder et al., 2017)
+	- what the fuck are i-vectors. They are a speaker representation modelling variability between speakers.
+	- MFCC inputs
+	- two-tier model
+		- frame-based w/ temporal calculations
+		- segment-based
+			- statistical layer to get means and std per segment
+			- two embedding layers
+		- softmax on 4733 speakers
+	- Contributions:
+		- embeddings from a DNN trained on a multiclass cross-entropy objective
+			- last two layers before softmax
+		- either just one of the layers, or a combination of their scores
+		- a fusion of scores between i-vectors and these embeddings
+		- fusion works best, most benefit seen in shorter segments
+		- even considerable performance cross-lingually, since models not trained on Cantonese and Tagalog
+	- so they filter out non-speech segments. In my work I do fucking whatever and might even have cases where the entire audio-clip contains a non-speech segment. I can argue that extracting willy-nilly can work, but that it doesn't account for this, so it might not work on *random* shorter segments, but it *might* work if non-speech segments are ignored first
