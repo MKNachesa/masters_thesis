@@ -5,3 +5,4 @@ metadata/riksdagen_speeches_with_ages.parquet
 metadata/riksdagen_speeches_filt_bleu.parquet
 metadata/riksdagen_speeches_sans_intr_id.parquet
 metadata/all_speeches_ts.parquet
+metadata/tsne_df.parquet

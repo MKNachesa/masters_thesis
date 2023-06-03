@@ -186,3 +186,26 @@ Deep Neural Network Embeddings for Text-Independent Speaker Verification (Snyder
 		- fusion works best, most benefit seen in shorter segments
 		- even considerable performance cross-lingually, since models not trained on Cantonese and Tagalog
 	- so they filter out non-speech segments. In my work I do fucking whatever and might even have cases where the entire audio-clip contains a non-speech segment. I can argue that extracting willy-nilly can work, but that it doesn't account for this, so it might not work on *random* shorter segments, but it *might* work if non-speech segments are ignored first
+	
+MFCC-BASED REMOTE PATHOLOGY DETECTION ON SPEECH TRANSMITTED THROUGH THE TELEPHONE CHANNEL Impact of Linear Distortions: Band Limitation, Frequency Response and Noise (Fraile et al., 2010)
+	- MFCC for voice features
+		- they also compare using only 16 bands or filters or smth
+	- compare different types of distortions/noise in telephone channel on accuracy of voice pathology detection
+		- worst effects are from band limitation and noise addition
+		
+CLASSIFICATION OF PARKINSON'S DISEASE PATIENTS USING NONLINEAR PHONETIC FEATURES AND MEL-FREQUENCY CEPSTRAL ANALYSIS (Jafari, 2012)
+	- MFCC and 7 other phonetic features to detect Parkinson's Disease. 2 of the phonetic features were new (EDC-PIS and EDC-PMS). Used MLP as classifier. The combination of 13 MFCC + 7 phonetic features worked best to classify patients. Even able to distinguish between mild and severe PD, but dataset quite small.
+	
+Combining Fingerprint and Voiceprint Biometrics for Identity Verification: an Experimental Comparison (Wang, Wang, and Tan, 2004)
+	- Used different ways of combining voiceprint and fingerprint biometrics to see how verification and identification would improve. Use 39-dimensional (!) MFCC
+	
+Hidebehind: Enjoy Voice Input with Voiceprint Unclonability and Anonymity (Qiand et al., 2018)
+	- Investigated converting voices to anonymise them, so voiceprints could not be extracted and linked to particular persons, though it did reduce ASR quality.
+	
+DeepVoice: A Voiceprint-based Mobile Health Framework for Parkinson’s Disease Identification (Zhang et al., 2018)
+	- Using Joint Time-Frequency Analysis/Spectrogram as input to modified AlexNet (CNN) architecture to detect Parkinson's disease
+	- find that from 5 seconds long onward (to 10) classification accuracy does not improve much (but very good, >90%)
+	
+ECAPA-TDNN: Emphasized Channel Attention, Propagation and Aggregation in TDNN Based Speaker Verification (Desplanques, Thienpondt, and Demuynck, 2020)
+	- Explain ECAPA-TDNN, improved on TDNN by emphasising channel attention, propagation and aggregation. Also, they incorporated Squeeze-Excitation blocks, multi-scale Res2Net features, extra skip connections, and channel-dependent attentive statistics pooling to make their model extra guud
+	- MFCCs as input to the model

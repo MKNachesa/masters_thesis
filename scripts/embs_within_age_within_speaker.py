@@ -52,17 +52,18 @@ def get_cossim_df(num_pairs, parquet_path, save_path):
         for speech_length in speech_lengths:
             plt.hist(list(reduce(lambda x, y: x + y, [df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])))
             plt.title(f'{(" ").join(save_path.split("_"))} cosine similarity scores for {speech_length} speech length')
-            plt.savefig(os.path.join(results_dir, f"{save_path}_{speech_length}_cossim_score.png"))
+            plt.savefig(os.path.join(results_dir, "unneeded", f"{save_path}_{speech_length}_cossim_score.png"))
             plt.close()
         #
-        # lesbian_flag = [(213, 45, 0), (239, 118, 39), (255, 154, 86), (230, 230, 230), (209, 98, 164), (181, 86, 144), (163, 2, 98)]
+        #lesbian_flag = [(213, 45, 0), (239, 118, 39), (255, 154, 86), (230, 230, 230), (209, 98, 164), (181, 86, 144), (163, 2, 98)]
         for i, speech_length in enumerate(speech_lengths):
             plt.hist(list(reduce(lambda x, y: x + y, [df[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)])),
-            label=f"{speech_length}",
-            bins=np.arange(-0.2, 1, 0.02))#, color=tuple(map(lambda x: x/255, lesbian_flag[i]))),
+                     label=f"{speech_length}",
+                     bins=np.arange(-0.2, 1, 0.02))#,
+                     #alpha=0.5)#, color=tuple(map(lambda x: x/255, lesbian_flag[i]))),
         plt.title(f'{(" ").join(save_path.split("_"))} cosine similarity scores')
         plt.legend()
-        plt.savefig(os.path.join(results_dir, f"{save_path}_all_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, "overal average cossim scores", f"{save_path}_all_cossim_score.png"))
         plt.close()
         #
     print()
@@ -76,9 +77,13 @@ def get_best_threshold_n_roc(df_within, df_across, split="train", NUM_PAIRS=3, m
     else:
         mode = "_within"
     scores = dict()
+    within_scores_all = []
+    across_scores_all = []
     for speech_length in speech_lengths:
         within_scores = list(reduce(lambda x, y: x + y, [df_within[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
         across_scores = df_across[f"score_1_{speech_length}"].tolist()
+        within_scores_all += within_scores
+        across_scores_all += across_scores
         across_n_within_age_scores = across_scores + within_scores
         true_scores = [0 for _ in range(len(across_scores))] + [1 for _ in range(len(within_scores))]
         fpr, tpr, thresholds = roc_curve(true_scores, across_n_within_age_scores, pos_label=1)
@@ -99,9 +104,28 @@ def get_best_threshold_n_roc(df_within, df_across, split="train", NUM_PAIRS=3, m
             plt.ylim([0, 1])
             plt.ylabel('True Positive Rate')
             plt.xlabel('False Positive Rate')
-            plt.savefig(os.path.join(results_dir, f"{split}_AOC_CURVE_within_speaker_within_age_VS_across_speaker{mode}_{speech_length}.png"))
+            plt.savefig(os.path.join(results_dir, "roc curves", f"{split}_AOC_CURVE_within_speaker_within_age_VS_across_speaker{mode}_{speech_length}.png"))
             plt.close()
             #
+    across_n_within_age_scores = across_scores_all + within_scores_all
+    true_scores = [0 for _ in range(len(across_scores_all))] + [1 for _ in range(len(within_scores_all))]
+    fpr, tpr, thresholds = roc_curve(true_scores, across_n_within_age_scores, pos_label=1)
+    roc_auc = auc(fpr, tpr)
+    eer = brentq(lambda x : 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
+    threshold = interp1d(fpr, thresholds)(eer)
+    threshold = float(threshold)
+    scores["all"] = (threshold, (fpr, tpr, thresholds))
+    if GENERATE_GRAPHS:
+        plt.title(f'ROC curve for all speech lengths')
+        plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+        plt.legend(loc='lower right')
+        plt.plot([0, 1], [0, 1],'r--')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.ylabel('True Positive Rate')
+        plt.xlabel('False Positive Rate')
+        plt.savefig(os.path.join(results_dir, "roc curves", f"{split}_AOC_CURVE_within_speaker_within_age_VS_across_speaker{mode}_all_speech_lengths.png"))
+        plt.close()
     return scores
 
 
@@ -114,9 +138,9 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3, mode=
     scores = dict()
     for speech_length in speech_lengths:
         within_scores = list(reduce(lambda x, y: x + y, [df_within[f"score_{i}_{speech_length}"].tolist() for i in range(1, NUM_PAIRS+1)]))
-        within_max = max(within_scores)
+        # within_max = max(within_scores)
         across_scores = df_across[f"score_1_{speech_length}"].tolist()
-        across_min = min(across_scores)
+        # across_min = min(across_scores)
         #
         threshold_scores = []
         for threshold in np.arange(-0.2, 1.01, 0.01):
@@ -132,18 +156,6 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3, mode=
                               for i in range(len(true_scores))])
             fpr = false_poss/len(thresh_across_scores)
             data = (threshold, accuracy, false_negs, false_poss, fnr, fpr)
-        # append data points to list
-            # the list should start with the first threshold that yields no false negatives
-            # if false_negs == 0:
-            #
-            # if threshold <= across_min:
-            #     threshold_scores = [data]
-            # # the list shold end with the last threshold that yields no false positives (I think?)
-            # # elif false_poss == 0:
-            # elif threshold > within_max:
-            #     threshold_scores.append(data)
-            #     break
-            # else:
             threshold_scores.append(data)
             #
         scores[f"{speech_length}"] = threshold_scores
@@ -175,7 +187,7 @@ def vary_threshold_graph(df_within, df_across, split="train", NUM_PAIRS=3, mode=
             ax2.set_ylim(top=1.024396551724138)
             plt.legend()
             plt.title(f"Accuracy VS FNR/FNR at different thresholds for {speech_length} speech length")
-            fig.savefig(os.path.join(results_dir, f'{split}_acc_vs_fnr_n_fpr_within_age_within_age_VS_across_speaker{mode}_{speech_length}.png'),
+            fig.savefig(os.path.join(results_dir, "acc vs fnr and fpr graphs", f'{split}_acc_vs_fnr_n_fpr_within_age_within_age_VS_across_speaker{mode}_{speech_length}.png'),
                         format='png',
                         dpi=100,
                         bbox_inches='tight')
@@ -310,6 +322,23 @@ def get_cossim_dfs(split):
     across_speaker_within_age_df = get_cossim_df(num_pairs=1,
                                                 parquet_path=f"{split}_across_speaker_within_age_comparisons.parquet",
                                                 save_path=f"{split}_across_speaker_within_age")
+    #
+    cossims = {"across speaker across age": [],
+               "within speaker across age": [],
+               "within speaker within age": []}
+    for i, speech_length in enumerate(speech_lengths):
+        for key, df, num_pairs in [("across speaker across age", across_speaker_df, 1),
+                                   ("within speaker across age", across_age_df, 3),
+                                   ("within speaker within age", within_age_df, 3)]:
+            
+            cossims[key] += list(reduce(lambda x, y: x + y, [df[f"score_{i}_{speech_length}"].tolist() for i in range(1, num_pairs+1)]))
+    for df_type, cossims_list in cossims.items():
+        plt.hist(cossims_list, label=df_type, bins=np.arange(-0.2, 1, 0.02))
+    plt.title(f'cosine similarity scores for all speech lengths combined')
+    plt.legend()
+    plt.savefig(os.path.join(results_dir, "overal average cossim scores", f"{split}_all_speech_lengths_all_cossim_score.png"))
+    plt.close()
+    #
     return across_age_df, within_age_df, across_speaker_df, across_speaker_within_age_df
 
 
@@ -344,7 +373,9 @@ def within_vs_across_speaker_graphs(across_age_df, within_age_df, across_speaker
                 label=f"across speakers {mode} ages", alpha=0.5)#, histtype="step")
         plt.legend()
         plt.title(f'{split} across speaker VS within speaker across ages cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_across_age_VS_across_speaker_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, 
+                                 "within speaker vs across speaker graphs", 
+                                 f"{split}_within_speaker_across_age_VS_across_speaker_{speech_length}_cossim_score.png"))
         plt.close()
         #
     for speech_length in speech_lengths:
@@ -354,7 +385,9 @@ def within_vs_across_speaker_graphs(across_age_df, within_age_df, across_speaker
                 label=f"across speakers {mode} ages", alpha=0.5)#, histtype="step")
         plt.legend()
         plt.title(f'{split} across speaker {mode} ages VS within speaker within ages\ncosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_within_age_VS_across_speaker_{mode}_age_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, 
+                                 "within speaker vs across speaker graphs",
+                                 f"{split}_within_speaker_within_age_VS_across_speaker_{mode}_age_{speech_length}_cossim_score.png"))
         plt.close()
 
 
@@ -394,7 +427,9 @@ def across_speaker_within_vs_across_age_graphs(across_age_df, within_age_df, spl
         plt.text(0.05, y_lim, text, verticalalignment="top", bbox=props)
         plt.legend(title="Comparison type")
         plt.title(f'{split} across speaker within VS across age cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_across_VS_within_age_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, 
+                                 "within speaker graphs",
+                                 f"{split}_across_speaker_across_VS_within_age_{speech_length}_cossim_score.png"))
         plt.close()
     df = stats_df[stats_df.comparison=="within"]
     x = [f"{i}" for i in df["length"].tolist()]
@@ -406,7 +441,9 @@ def across_speaker_within_vs_across_age_graphs(across_age_df, within_age_df, spl
     plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
     plt.title(f'{split} cosine similarity score means for all speech lengths,\ndifferent speakers, same VS different age')
     plt.legend(title="age")
-    plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_same_VS_diff_age_means_cossim_score.png"))
+    plt.savefig(os.path.join(results_dir, 
+                             "within speaker graphs",
+                             f"{split}_across_speaker_same_VS_diff_age_means_cossim_score.png"))
     plt.close()
 
 
@@ -432,13 +469,12 @@ def compare_men_women_within_age(within_age_df, split, mode="within"):
         y_lim = plt.gca().get_ylim()[1]*0.95
         plt.text(0.05, y_lim, text, verticalalignment="top", bbox=props)
         plt.title(f'{split} within {mode} within ages, m VS f cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_{mode}_speaker_within_age_m_VS_f_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, "gender graphs", f"{split}_{mode}_speaker_within_age_m_VS_f_{speech_length}_cossim_score.png"))
         plt.close()
         print(f"{speech_length:>13}\t{stat:>9.2f}\t{pvalue:>7.2e}")
 
 
 compare_men_women_within_age(train_within_age_df, "train")
-# compare_men_women_within_age(train_across_speaker_within_age_df, "train")
 
 
 def compare_men_women_across_speaker(across_speaker_within_age_df, split):
@@ -491,7 +527,9 @@ def compare_men_women_across_speaker(across_speaker_within_age_df, split):
         y_lim = plt.gca().get_ylim()[1]*0.95
         plt.text(0.70, y_lim, text, verticalalignment="top", bbox=props)
         plt.title(f'{split} across speaker within ages,\nsame VS diff gender cosine similarity scores for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_within_age_same_VS_diff_gender_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, 
+                                 "gender graphs",
+                                 f"{split}_across_speaker_within_age_same_VS_diff_gender_{speech_length}_cossim_score.png"))
         plt.close()
         print(f"{speech_length:>13}\t{stat:>9.2f}\t{pvalue:>7.2e}")
         #
@@ -505,7 +543,9 @@ def compare_men_women_across_speaker(across_speaker_within_age_df, split):
     plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
     plt.title(f'{split} cosine similarity score means for all speech lengths,\ndifferent speakers, same ages, same VS diff gender')
     plt.legend()
-    plt.savefig(os.path.join(results_dir, f"{split}_across_speaker_within_age_same_VS_diff_gender_means_cossim_score.png"))
+    plt.savefig(os.path.join(results_dir, 
+                             "gender graphs",
+                             f"{split}_across_speaker_within_age_same_VS_diff_gender_means_cossim_score.png"))
     plt.close()
 
 
@@ -615,7 +655,7 @@ def across_ages_graph(across_age_df, across_speaker_df, thresholds, split="train
         stats_df = pd.concat([pd.DataFrame(stats_dict, index=[0]), stats_df]).reset_index(drop=True)
         plt.legend(title="age differences")
         plt.title(f'{split} within speaker cosine similarities for {speech_length} speech length')
-        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_across_age_{speech_length}_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, "unneeded", f"{split}_within_speaker_across_age_{speech_length}_cossim_score.png"))
         plt.close()
     speech_length = "full"
     within_age_preds = list(reduce(lambda x, y: x + y, 
@@ -634,7 +674,9 @@ def across_ages_graph(across_age_df, across_speaker_df, thresholds, split="train
         plt.gca().set_ylim(0, 50)
         plt.legend(title="age differences")
         plt.title(f'{split} within and across speaker across ages cosine similarities for {age_diff} year age difference')
-        plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_across_age_{age_diff}_age_diff_cossim_score.png"))
+        plt.savefig(os.path.join(results_dir, 
+                                 "within speaker graphs", 
+                                 f"{split}_within_speaker_across_age_{age_diff}_age_diff_cossim_score.png"))
         plt.close()
     for age_diff in range(0, 9+1):
     # for speech_length in speech_lengths:
@@ -648,7 +690,9 @@ def across_ages_graph(across_age_df, across_speaker_df, thresholds, split="train
     plt.gca().fill_between(x, df["ci_lower"], df["ci_upper"], alpha=0.15)
     plt.title(f'{split} cosine similarity score means for all speech lengths,\nsame VS diff speakers, across ages')
     plt.legend(title="Age differences")
-    plt.savefig(os.path.join(results_dir, f"{split}_within_speaker_across_age_all_speech_lengths_means_cossim_score.png"))
+    plt.savefig(os.path.join(results_dir, 
+                             "within speaker vs across speaker graphs",
+                             f"{split}_within_speaker_across_age_all_speech_lengths_means_cossim_score.png"))
     plt.close()
 
 across_ages_graph(test_across_age_df, test_across_speaker_df, scores, split="test")

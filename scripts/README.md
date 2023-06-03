@@ -8,8 +8,8 @@ Saves to
 **create_timestamps.py**
 Creates timestamps for all speeches with length >= 80 secs at various lengths
 Saves to
-	- *all_speeches_ts.parquet*
 	- *all_speeches_ts_downsize.parquet*
+	- *all_speeches_ts.parquet*
 		- a downsized version including a subset of columns
 		
 **split_audio_by_speeches_modified.py**
